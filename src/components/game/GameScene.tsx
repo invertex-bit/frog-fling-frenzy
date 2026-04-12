@@ -8,6 +8,7 @@ import Frog from './Frog';
 import Slingshot from './Slingshot';
 import Projectile from './Projectile';
 import Ripple from './Ripple';
+import { playSplash, playCroak, playStretch, playShoot, playFrogJump } from './SoundEffects';
 
 const STONE_COLORS = ['#e53935', '#fdd835', '#1e88e5', '#43a047'];
 const LILY_PAD_POSITIONS: [number, number, number][] = [
@@ -74,11 +75,19 @@ const InputHandler = ({
       setPullBack(new THREE.Vector3(0, 0, 0));
     };
 
+    let lastStretchTime = 0;
     const onPointerMove = (e: PointerEvent) => {
       if (!isDragging.current) return;
       const dx = (e.clientX - startPoint.current.x) / window.innerWidth;
       const dy = (e.clientY - startPoint.current.y) / window.innerHeight;
-      setPullBack(new THREE.Vector3(-dx * 2, dy * 2, dy * 3));
+      const newPull = new THREE.Vector3(-dx * 2, dy * 2, dy * 3);
+      setPullBack(newPull);
+      // Stretch sound throttled
+      const now = performance.now();
+      if (now - lastStretchTime > 120) {
+        playStretch(newPull.length());
+        lastStretchTime = now;
+      }
     };
 
     const onPointerUp = () => {
@@ -94,6 +103,7 @@ const InputHandler = ({
           Math.abs(pb.y) * 10 + 3,
           -Math.abs(pb.z) * 8 - 5
         );
+        playShoot(pb.length());
         onShoot(vel);
       }
       setPullBack(new THREE.Vector3(0, 0, 0));
@@ -212,6 +222,7 @@ const GameWorld = () => {
   const addRipple = useCallback((position: THREE.Vector3) => {
     const id = `ripple-${Date.now()}-${Math.random()}`;
     setRipples((prev) => [...prev, { id, position }]);
+    playSplash();
   }, []);
 
   const removeRipple = useCallback((id: string) => {
@@ -225,6 +236,8 @@ const GameWorld = () => {
           if (f.id === id) {
             const pos = LILY_PAD_POSITIONS[f.padIndex];
             addRipple(new THREE.Vector3(pos[0], pos[1], pos[2]));
+            playCroak();
+            playFrogJump();
             return { ...f, visible: false, shouldDodge: false, isSpawning: false, respawnTimer: 3 + Math.random() * 2 };
           }
           return f;
