@@ -19,7 +19,7 @@ const Slingshot = ({ pullBack, isPulling, stoneColor }: SlingshotProps) => {
   }, [isPulling, pullBack]);
 
   return (
-    <group position={[0, -1.2, 1.5]}>
+    <group position={[0, -0.3, 2.8]}>
       {/* Handle */}
       <mesh position={[0, -0.1, 0]}>
         <cylinderGeometry args={[0.06, 0.07, 0.7, 8]} />
