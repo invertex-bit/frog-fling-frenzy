@@ -31,7 +31,6 @@ const Projectile = ({ id, startPosition, velocity, color, onHitWater, onRemove, 
 
     time.current += delta;
 
-    // Apply gravity
     vel.current.y += GRAVITY * delta;
     pos.current.add(vel.current.clone().multiplyScalar(delta));
 
@@ -39,17 +38,14 @@ const Projectile = ({ id, startPosition, velocity, color, onHitWater, onRemove, 
     ref.current.rotation.x += delta * 5;
     ref.current.rotation.z += delta * 3;
 
-    // Check frog proximity
     checkFrogHit(pos.current);
 
-    // Hit water level or ground
     if (pos.current.y < -0.5) {
       alive.current = false;
       onHitWater(pos.current.clone());
       onRemove(id);
     }
 
-    // Remove if too far
     if (pos.current.z < -25 || time.current > 5) {
       alive.current = false;
       onRemove(id);
@@ -58,7 +54,7 @@ const Projectile = ({ id, startPosition, velocity, color, onHitWater, onRemove, 
 
   return (
     <mesh ref={ref} position={startPosition.toArray()}>
-      <dodecahedronGeometry args={[0.1, 0]} />
+      <dodecahedronGeometry args={[0.1, 1]} />
       <meshStandardMaterial color={color} flatShading />
     </mesh>
   );
