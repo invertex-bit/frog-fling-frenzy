@@ -1,4 +1,3 @@
-// Synthesized sound effects using Web Audio API
 let audioCtx: AudioContext | null = null;
 
 const getAudioContext = () => {
@@ -11,25 +10,21 @@ const getAudioContext = () => {
   return audioCtx;
 };
 
-// Water splash sound
 export const playSplash = (volume = 0.3) => {
   const ctx = getAudioContext();
   const now = ctx.currentTime;
 
-  // Noise burst for splash
   const bufferSize = ctx.sampleRate * 0.4;
   const buffer = ctx.createBuffer(1, bufferSize, ctx.sampleRate);
   const data = buffer.getChannelData(0);
   for (let i = 0; i < bufferSize; i++) {
     const t = i / bufferSize;
-    // Filtered noise that decays
     data[i] = (Math.random() * 2 - 1) * Math.exp(-t * 6) * (1 + Math.sin(t * 200) * 0.3);
   }
 
   const source = ctx.createBufferSource();
   source.buffer = buffer;
 
-  // Bandpass filter for watery sound
   const filter = ctx.createBiquadFilter();
   filter.type = 'bandpass';
   filter.frequency.setValueAtTime(800, now);
@@ -46,7 +41,6 @@ export const playSplash = (volume = 0.3) => {
   source.start(now);
   source.stop(now + 0.5);
 
-  // Bubbling effect
   setTimeout(() => {
     const osc = ctx.createOscillator();
     osc.type = 'sine';
@@ -64,13 +58,11 @@ export const playSplash = (volume = 0.3) => {
   }, 100);
 };
 
-// Frog croak sound
 export const playCroak = (volume = 0.2) => {
   const ctx = getAudioContext();
   const now = ctx.currentTime;
   const baseFreq = 120 + Math.random() * 60;
 
-  // Main croak oscillator
   const osc1 = ctx.createOscillator();
   osc1.type = 'sawtooth';
   osc1.frequency.setValueAtTime(baseFreq, now);
@@ -79,14 +71,12 @@ export const playCroak = (volume = 0.2) => {
   osc1.frequency.setValueAtTime(baseFreq * 1.2, now + 0.2);
   osc1.frequency.exponentialRampToValueAtTime(baseFreq * 0.6, now + 0.35);
 
-  // Sub oscillator for depth
   const osc2 = ctx.createOscillator();
   osc2.type = 'square';
   osc2.frequency.setValueAtTime(baseFreq * 0.5, now);
   osc2.frequency.setValueAtTime(baseFreq * 0.65, now + 0.05);
   osc2.frequency.exponentialRampToValueAtTime(baseFreq * 0.35, now + 0.35);
 
-  // Amplitude modulation for "ribbit" texture
   const lfo = ctx.createOscillator();
   lfo.frequency.value = 30 + Math.random() * 20;
   const lfoGain = ctx.createGain();
@@ -97,7 +87,6 @@ export const playCroak = (volume = 0.2) => {
   ampMod.gain.value = 0.5;
   lfoGain.connect(ampMod.gain);
 
-  // Filter
   const filter = ctx.createBiquadFilter();
   filter.type = 'lowpass';
   filter.frequency.value = 600;
@@ -125,45 +114,15 @@ export const playCroak = (volume = 0.2) => {
   osc2.stop(now + 0.4);
 };
 
-// Slingshot stretch/pull sound
-export const playStretch = (intensity = 0.5, volume = 0.1) => {
-  const ctx = getAudioContext();
-  const now = ctx.currentTime;
-
-  const osc = ctx.createOscillator();
-  osc.type = 'sawtooth';
-  const freq = 80 + intensity * 300;
-  osc.frequency.setValueAtTime(freq, now);
-  osc.frequency.linearRampToValueAtTime(freq * 1.1, now + 0.08);
-
-  const filter = ctx.createBiquadFilter();
-  filter.type = 'lowpass';
-  filter.frequency.value = 400 + intensity * 600;
-  filter.Q.value = 5;
-
-  const gain = ctx.createGain();
-  gain.gain.setValueAtTime(volume * intensity, now);
-  gain.gain.exponentialRampToValueAtTime(0.001, now + 0.1);
-
-  osc.connect(filter);
-  filter.connect(gain);
-  gain.connect(ctx.destination);
-  osc.start(now);
-  osc.stop(now + 0.1);
-};
-
-// Slingshot release/shoot sound
 export const playShoot = (power = 1, volume = 0.3) => {
   const ctx = getAudioContext();
   const now = ctx.currentTime;
 
-  // Twang sound
   const osc = ctx.createOscillator();
   osc.type = 'triangle';
   osc.frequency.setValueAtTime(300 + power * 200, now);
   osc.frequency.exponentialRampToValueAtTime(80, now + 0.15);
 
-  // Snap noise
   const bufferSize = ctx.sampleRate * 0.08;
   const buffer = ctx.createBuffer(1, bufferSize, ctx.sampleRate);
   const data = buffer.getChannelData(0);
@@ -197,7 +156,6 @@ export const playShoot = (power = 1, volume = 0.3) => {
   osc.stop(now + 0.2);
   noiseSource.stop(now + 0.08);
 
-  // Whoosh
   const whooshBuf = ctx.createBuffer(1, ctx.sampleRate * 0.3, ctx.sampleRate);
   const whooshData = whooshBuf.getChannelData(0);
   for (let i = 0; i < whooshBuf.length; i++) {
@@ -221,7 +179,6 @@ export const playShoot = (power = 1, volume = 0.3) => {
   whoosh.stop(now + 0.3);
 };
 
-// Frog jump sound (short hop)
 export const playFrogJump = (volume = 0.2) => {
   const ctx = getAudioContext();
   const now = ctx.currentTime;

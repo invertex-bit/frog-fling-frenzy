@@ -8,7 +8,8 @@ import Frog from './Frog';
 import Slingshot from './Slingshot';
 import Projectile from './Projectile';
 import Ripple from './Ripple';
-import { playSplash, playCroak, playStretch, playShoot, playFrogJump } from './SoundEffects';
+import Environment from './Environment';
+import { playSplash, playShoot, playFrogJump } from './SoundEffects';
 
 const STONE_COLORS = ['#e53935', '#fdd835', '#1e88e5', '#43a047'];
 const LILY_PAD_POSITIONS: [number, number, number][] = [
@@ -75,19 +76,13 @@ const InputHandler = ({
       setPullBack(new THREE.Vector3(0, 0, 0));
     };
 
-    let lastStretchTime = 0;
     const onPointerMove = (e: PointerEvent) => {
       if (!isDragging.current) return;
       const dx = (e.clientX - startPoint.current.x) / window.innerWidth;
       const dy = (e.clientY - startPoint.current.y) / window.innerHeight;
-      const newPull = new THREE.Vector3(-dx * 2, dy * 2, dy * 3);
+      // Pull direction matches mouse: drag left = rubber band goes left, drag down = goes down/back
+      const newPull = new THREE.Vector3(dx * 2, -dy * 2, -dy * 3);
       setPullBack(newPull);
-      // Stretch sound throttled
-      const now = performance.now();
-      if (now - lastStretchTime > 120) {
-        playStretch(newPull.length());
-        lastStretchTime = now;
-      }
     };
 
     const onPointerUp = () => {
@@ -98,8 +93,9 @@ const InputHandler = ({
       const pb = pullBackRef.current;
       const power = pb.length() * 15;
       if (power > 0.5) {
+        // Shoot opposite to pull direction
         const vel = new THREE.Vector3(
-          pb.x * 8,
+          -pb.x * 8,
           Math.abs(pb.y) * 10 + 3,
           -Math.abs(pb.z) * 8 - 5
         );
@@ -191,7 +187,7 @@ const RespawnManager = ({
 
 const Ground = () => (
   <mesh rotation={[-Math.PI / 2, 0, 0]} position={[0, -0.6, 0]} receiveShadow>
-    <planeGeometry args={[50, 50]} />
+    <planeGeometry args={[60, 60]} />
     <meshStandardMaterial color="#5a8a3c" flatShading />
   </mesh>
 );
@@ -204,7 +200,6 @@ const GameWorld = () => {
   const [isPulling, setIsPulling] = useState(false);
   const [currentColor, setCurrentColor] = useState(getRandomColor());
 
-  // Keep ref in sync
   useEffect(() => { pullBackRef.current = pullBack; }, [pullBack]);
 
   const initialPads = useMemo(() => pickRandomPads(4), []);
@@ -231,12 +226,12 @@ const GameWorld = () => {
 
   const handleFrogDodge = useCallback(
     (id: string) => {
+      // Called when dodge animation completes
       setFrogs((prev) =>
         prev.map((f) => {
           if (f.id === id) {
             const pos = LILY_PAD_POSITIONS[f.padIndex];
             addRipple(new THREE.Vector3(pos[0], pos[1], pos[2]));
-            playCroak();
             playFrogJump();
             return { ...f, visible: false, shouldDodge: false, isSpawning: false, respawnTimer: 3 + Math.random() * 2 };
           }
@@ -288,30 +283,23 @@ const GameWorld = () => {
       />
       <RespawnManager frogs={frogs} setFrogs={setFrogs} addRipple={addRipple} />
 
-      {/* Lighting */}
       <ambientLight intensity={0.6} />
       <directionalLight position={[5, 10, 5]} intensity={1} castShadow />
       <directionalLight position={[-3, 8, -5]} intensity={0.3} />
 
-      {/* Sky */}
       <Sky sunPosition={[50, 30, -20]} turbidity={3} rayleigh={0.5} />
 
-      {/* Environment */}
       <Ground />
       <Pond />
+      <Environment />
 
-      {/* Lily pads */}
       {LILY_PAD_POSITIONS.map((pos, i) => (
         <LilyPad key={i} position={pos} />
       ))}
 
-      {/* Frogs */}
       <FrogManager frogs={frogs} onDodge={handleFrogDodge} />
-
-      {/* Slingshot */}
       <Slingshot pullBack={pullBack} isPulling={isPulling} stoneColor={currentColor} />
 
-      {/* Projectiles */}
       {projectiles.map((proj) => (
         <Projectile
           key={proj.id}
@@ -325,7 +313,6 @@ const GameWorld = () => {
         />
       ))}
 
-      {/* Ripples */}
       {ripples.map((ripple) => (
         <Ripple
           key={ripple.id}
@@ -347,19 +334,6 @@ const GameScene = () => {
       >
         <GameWorld />
       </Canvas>
-      <div
-        style={{
-          position: 'absolute',
-          top: '50%',
-          left: '50%',
-          transform: 'translate(-50%, -50%)',
-          width: 4,
-          height: 4,
-          borderRadius: '50%',
-          background: 'rgba(255,255,255,0.5)',
-          pointerEvents: 'none',
-        }}
-      />
     </div>
   );
 };
