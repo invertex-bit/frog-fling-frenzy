@@ -222,6 +222,7 @@ const GameWorld = () => {
   const addRipple = useCallback((position: THREE.Vector3) => {
     const id = `ripple-${Date.now()}-${Math.random()}`;
     setRipples((prev) => [...prev, { id, position }]);
+    playSplash();
   }, []);
 
   const removeRipple = useCallback((id: string) => {
@@ -235,6 +236,8 @@ const GameWorld = () => {
           if (f.id === id) {
             const pos = LILY_PAD_POSITIONS[f.padIndex];
             addRipple(new THREE.Vector3(pos[0], pos[1], pos[2]));
+            playCroak();
+            playFrogJump();
             return { ...f, visible: false, shouldDodge: false, isSpawning: false, respawnTimer: 3 + Math.random() * 2 };
           }
           return f;
