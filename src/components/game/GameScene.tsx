@@ -1,4 +1,4 @@
-import { useState, useCallback, useRef, useEffect } from 'react';
+import { useState, useCallback, useRef, useEffect, useMemo } from 'react';
 import { Canvas, useThree, useFrame } from '@react-three/fiber';
 import { Sky } from '@react-three/drei';
 import * as THREE from 'three';
@@ -26,6 +26,7 @@ interface FrogData {
   shouldDodge: boolean;
   visible: boolean;
   respawnTimer: number | null;
+  isSpawning: boolean;
 }
 
 interface ProjectileData {
@@ -50,16 +51,16 @@ const pickRandomPads = (count: number, exclude: number[] = []) => {
 
 const InputHandler = ({
   onShoot,
-  pullBack,
+  pullBackRef,
   setPullBack,
   setIsPulling,
 }: {
   onShoot: (velocity: THREE.Vector3) => void;
-  pullBack: THREE.Vector3;
+  pullBackRef: React.MutableRefObject<THREE.Vector3>;
   setPullBack: (v: THREE.Vector3) => void;
   setIsPulling: (v: boolean) => void;
 }) => {
-  const { camera, gl } = useThree();
+  const { gl } = useThree();
   const isDragging = useRef(false);
   const startPoint = useRef(new THREE.Vector2());
 
@@ -77,7 +78,6 @@ const InputHandler = ({
       if (!isDragging.current) return;
       const dx = (e.clientX - startPoint.current.x) / window.innerWidth;
       const dy = (e.clientY - startPoint.current.y) / window.innerHeight;
-      // Inverted: dragging down/back = aiming up/forward
       setPullBack(new THREE.Vector3(-dx * 2, dy * 2, dy * 3));
     };
 
@@ -86,13 +86,13 @@ const InputHandler = ({
       isDragging.current = false;
       setIsPulling(false);
 
-      // Launch velocity is opposite of pull direction
-      const power = pullBack.length() * 15;
+      const pb = pullBackRef.current;
+      const power = pb.length() * 15;
       if (power > 0.5) {
         const vel = new THREE.Vector3(
-          pullBack.x * 8,
-          Math.abs(pullBack.y) * 10 + 3,
-          -Math.abs(pullBack.z) * 8 - 5
+          pb.x * 8,
+          Math.abs(pb.y) * 10 + 3,
+          -Math.abs(pb.z) * 8 - 5
         );
         onShoot(vel);
       }
@@ -108,7 +108,7 @@ const InputHandler = ({
       canvas.removeEventListener('pointermove', onPointerMove);
       canvas.removeEventListener('pointerup', onPointerUp);
     };
-  }, [gl, camera, pullBack, setPullBack, setIsPulling, onShoot]);
+  }, [gl, pullBackRef, setPullBack, setIsPulling, onShoot]);
 
   return null;
 };
@@ -131,6 +131,7 @@ const FrogManager = ({
             position={LILY_PAD_POSITIONS[frog.padIndex]}
             onDodge={onDodge}
             shouldDodge={frog.shouldDodge}
+            isSpawning={frog.isSpawning}
           />
         ))}
     </>
@@ -140,9 +141,11 @@ const FrogManager = ({
 const RespawnManager = ({
   frogs,
   setFrogs,
+  addRipple,
 }: {
   frogs: FrogData[];
   setFrogs: React.Dispatch<React.SetStateAction<FrogData[]>>;
+  addRipple: (position: THREE.Vector3) => void;
 }) => {
   useFrame((_, delta) => {
     setFrogs((prev) =>
@@ -153,12 +156,15 @@ const RespawnManager = ({
             const usedPads = prev.filter((ff) => ff.visible).map((ff) => ff.padIndex);
             const available = pickRandomPads(1, usedPads);
             if (available.length > 0) {
+              const padPos = LILY_PAD_POSITIONS[available[0]];
+              addRipple(new THREE.Vector3(padPos[0], padPos[1], padPos[2]));
               return {
                 ...f,
                 padIndex: available[0],
                 visible: true,
                 shouldDodge: false,
                 respawnTimer: null,
+                isSpawning: true,
                 id: `frog-${Date.now()}-${Math.random()}`,
               };
             }
@@ -184,10 +190,14 @@ const GameWorld = () => {
   const [projectiles, setProjectiles] = useState<ProjectileData[]>([]);
   const [ripples, setRipples] = useState<RippleData[]>([]);
   const [pullBack, setPullBack] = useState(new THREE.Vector3(0, 0, 0));
+  const pullBackRef = useRef(pullBack);
   const [isPulling, setIsPulling] = useState(false);
   const [currentColor, setCurrentColor] = useState(getRandomColor());
 
-  const initialPads = pickRandomPads(4);
+  // Keep ref in sync
+  useEffect(() => { pullBackRef.current = pullBack; }, [pullBack]);
+
+  const initialPads = useMemo(() => pickRandomPads(4), []);
   const [frogs, setFrogs] = useState<FrogData[]>(
     initialPads.map((padIdx, i) => ({
       id: `frog-${i}`,
@@ -195,6 +205,7 @@ const GameWorld = () => {
       shouldDodge: false,
       visible: true,
       respawnTimer: null,
+      isSpawning: false,
     }))
   );
 
@@ -212,10 +223,9 @@ const GameWorld = () => {
       setFrogs((prev) =>
         prev.map((f) => {
           if (f.id === id) {
-            // Add ripple at frog position
             const pos = LILY_PAD_POSITIONS[f.padIndex];
             addRipple(new THREE.Vector3(pos[0], pos[1], pos[2]));
-            return { ...f, visible: false, shouldDodge: false, respawnTimer: 3 + Math.random() * 2 };
+            return { ...f, visible: false, shouldDodge: false, isSpawning: false, respawnTimer: 3 + Math.random() * 2 };
           }
           return f;
         })
@@ -259,11 +269,11 @@ const GameWorld = () => {
     <>
       <InputHandler
         onShoot={handleShoot}
-        pullBack={pullBack}
+        pullBackRef={pullBackRef}
         setPullBack={setPullBack}
         setIsPulling={setIsPulling}
       />
-      <RespawnManager frogs={frogs} setFrogs={setFrogs} />
+      <RespawnManager frogs={frogs} setFrogs={setFrogs} addRipple={addRipple} />
 
       {/* Lighting */}
       <ambientLight intensity={0.6} />
@@ -324,7 +334,6 @@ const GameScene = () => {
       >
         <GameWorld />
       </Canvas>
-      {/* Minimal crosshair UI */}
       <div
         style={{
           position: 'absolute',
