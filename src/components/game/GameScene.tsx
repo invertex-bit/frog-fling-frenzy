@@ -267,7 +267,7 @@ const GameWorld = () => {
   const handleShoot = useCallback(
     (velocity: THREE.Vector3) => {
       const id = `proj-${Date.now()}`;
-      const startPosition = new THREE.Vector3(0, -0.5, 1.5);
+      const startPosition = new THREE.Vector3(0, 0.15, 2.8);
       setProjectiles((prev) => [...prev, { id, startPosition, velocity, color: currentColor }]);
       setCurrentColor(getRandomColor());
     },
