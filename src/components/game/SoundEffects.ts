@@ -10,215 +10,322 @@ const getAudioContext = () => {
   return audioCtx;
 };
 
-export const playSplash = (volume = 0.3) => {
+export const playSplash = (volume = 0.4) => {
   const ctx = getAudioContext();
   const now = ctx.currentTime;
 
-  // White noise burst with filtered low-end for water body
-  const bufferSize = ctx.sampleRate * 0.6;
-  const buffer = ctx.createBuffer(1, bufferSize, ctx.sampleRate);
-  const data = buffer.getChannelData(0);
-  for (let i = 0; i < bufferSize; i++) {
-    const t = i / bufferSize;
-    // Layered noise envelope: fast attack, slow decay
-    data[i] = (Math.random() * 2 - 1) * Math.exp(-t * 4) * (0.8 + Math.sin(t * 80) * 0.2);
+  // Layer 1: Deep water body — long filtered noise with slow decay
+  const bodyLen = ctx.sampleRate * 0.8;
+  const bodyBuf = ctx.createBuffer(1, bodyLen, ctx.sampleRate);
+  const bodyData = bodyBuf.getChannelData(0);
+  for (let i = 0; i < bodyLen; i++) {
+    const t = i / bodyLen;
+    // Shaped noise: fast attack at ~5ms, slow exponential decay
+    const env = t < 0.006 ? t / 0.006 : Math.exp(-t * 3.5);
+    bodyData[i] = (Math.random() * 2 - 1) * env;
+  }
+  const bodySrc = ctx.createBufferSource();
+  bodySrc.buffer = bodyBuf;
+
+  // Two cascaded low-pass filters for warm water tone
+  const lp1 = ctx.createBiquadFilter();
+  lp1.type = 'lowpass';
+  lp1.frequency.setValueAtTime(1800, now);
+  lp1.frequency.exponentialRampToValueAtTime(250, now + 0.5);
+  lp1.Q.value = 0.5;
+
+  const lp2 = ctx.createBiquadFilter();
+  lp2.type = 'lowpass';
+  lp2.frequency.setValueAtTime(3000, now);
+  lp2.frequency.exponentialRampToValueAtTime(400, now + 0.6);
+  lp2.Q.value = 0.3;
+
+  const bodyGain = ctx.createGain();
+  bodyGain.gain.setValueAtTime(0, now);
+  bodyGain.gain.linearRampToValueAtTime(volume * 0.7, now + 0.005);
+  bodyGain.gain.exponentialRampToValueAtTime(0.001, now + 0.7);
+
+  bodySrc.connect(lp1);
+  lp1.connect(lp2);
+  lp2.connect(bodyGain);
+  bodyGain.connect(ctx.destination);
+  bodySrc.start(now);
+  bodySrc.stop(now + 0.8);
+
+  // Layer 2: Initial impact transient — short sharp crack
+  const impactLen = ctx.sampleRate * 0.025;
+  const impactBuf = ctx.createBuffer(1, impactLen, ctx.sampleRate);
+  const impactData = impactBuf.getChannelData(0);
+  for (let i = 0; i < impactLen; i++) {
+    const t = i / impactLen;
+    impactData[i] = (Math.random() * 2 - 1) * Math.exp(-t * 60);
+  }
+  const impactSrc = ctx.createBufferSource();
+  impactSrc.buffer = impactBuf;
+  const impactGain = ctx.createGain();
+  impactGain.gain.setValueAtTime(volume * 0.5, now);
+  impactGain.gain.exponentialRampToValueAtTime(0.001, now + 0.03);
+  impactSrc.connect(impactGain);
+  impactGain.connect(ctx.destination);
+  impactSrc.start(now);
+  impactSrc.stop(now + 0.03);
+
+  // Layer 3: Scattered droplets — tiny delayed noise bursts
+  const dropCount = 4 + Math.floor(Math.random() * 3);
+  for (let d = 0; d < dropCount; d++) {
+    const delay = 0.05 + Math.random() * 0.3;
+    const dropDur = 0.01 + Math.random() * 0.02;
+    const dropLen = Math.floor(ctx.sampleRate * dropDur);
+    const dropBuf = ctx.createBuffer(1, dropLen, ctx.sampleRate);
+    const dropData = dropBuf.getChannelData(0);
+    for (let i = 0; i < dropLen; i++) {
+      const t = i / dropLen;
+      dropData[i] = (Math.random() * 2 - 1) * Math.exp(-t * 30);
+    }
+    const dropSrc = ctx.createBufferSource();
+    dropSrc.buffer = dropBuf;
+
+    const dropBp = ctx.createBiquadFilter();
+    dropBp.type = 'bandpass';
+    dropBp.frequency.value = 2000 + Math.random() * 4000;
+    dropBp.Q.value = 1.5;
+
+    const dropGain = ctx.createGain();
+    dropGain.gain.setValueAtTime(volume * (0.05 + Math.random() * 0.1), now + delay);
+    dropGain.gain.exponentialRampToValueAtTime(0.001, now + delay + dropDur);
+
+    dropSrc.connect(dropBp);
+    dropBp.connect(dropGain);
+    dropGain.connect(ctx.destination);
+    dropSrc.start(now + delay);
+    dropSrc.stop(now + delay + dropDur + 0.01);
   }
 
-  const source = ctx.createBufferSource();
-  source.buffer = buffer;
-
-  // Low-pass filter for water body
-  const lpFilter = ctx.createBiquadFilter();
-  lpFilter.type = 'lowpass';
-  lpFilter.frequency.setValueAtTime(2000, now);
-  lpFilter.frequency.exponentialRampToValueAtTime(300, now + 0.4);
-  lpFilter.Q.value = 0.7;
-
-  const gain = ctx.createGain();
-  gain.gain.setValueAtTime(volume * 0.8, now);
-  gain.gain.setValueAtTime(volume, now + 0.02);
-  gain.gain.exponentialRampToValueAtTime(0.001, now + 0.6);
-
-  source.connect(lpFilter);
-  lpFilter.connect(gain);
-  gain.connect(ctx.destination);
-  source.start(now);
-  source.stop(now + 0.6);
-
-  // Bubble sounds - multiple random bubbles
-  for (let b = 0; b < 3; b++) {
-    const delay = 0.08 + Math.random() * 0.15;
-    const bubbleFreq = 200 + Math.random() * 300;
-    const osc = ctx.createOscillator();
-    osc.type = 'sine';
-    osc.frequency.setValueAtTime(bubbleFreq, now + delay);
-    osc.frequency.exponentialRampToValueAtTime(bubbleFreq * 0.4, now + delay + 0.12);
-
-    const bubbleGain = ctx.createGain();
-    bubbleGain.gain.setValueAtTime(0, now);
-    bubbleGain.gain.setValueAtTime(volume * 0.08, now + delay);
-    bubbleGain.gain.exponentialRampToValueAtTime(0.001, now + delay + 0.12);
-
-    osc.connect(bubbleGain);
-    bubbleGain.connect(ctx.destination);
-    osc.start(now + delay);
-    osc.stop(now + delay + 0.15);
-  }
-
-  // Secondary splash layer - higher frequency spray
-  const sprayBuf = ctx.createBuffer(1, ctx.sampleRate * 0.15, ctx.sampleRate);
-  const sprayData = sprayBuf.getChannelData(0);
-  for (let i = 0; i < sprayBuf.length; i++) {
-    const t = i / sprayBuf.length;
-    sprayData[i] = (Math.random() * 2 - 1) * Math.exp(-t * 15) * 0.5;
-  }
-  const spraySource = ctx.createBufferSource();
-  spraySource.buffer = sprayBuf;
-  const hpFilter = ctx.createBiquadFilter();
-  hpFilter.type = 'highpass';
-  hpFilter.frequency.value = 3000;
-  const sprayGain = ctx.createGain();
-  sprayGain.gain.setValueAtTime(volume * 0.3, now);
-  sprayGain.gain.exponentialRampToValueAtTime(0.001, now + 0.12);
-  spraySource.connect(hpFilter);
-  hpFilter.connect(sprayGain);
-  sprayGain.connect(ctx.destination);
-  spraySource.start(now);
-  spraySource.stop(now + 0.15);
+  // Layer 4: Sub-bass thud for weight
+  const subOsc = ctx.createOscillator();
+  subOsc.type = 'sine';
+  subOsc.frequency.setValueAtTime(80, now);
+  subOsc.frequency.exponentialRampToValueAtTime(40, now + 0.15);
+  const subGain = ctx.createGain();
+  subGain.gain.setValueAtTime(volume * 0.25, now);
+  subGain.gain.exponentialRampToValueAtTime(0.001, now + 0.2);
+  subOsc.connect(subGain);
+  subGain.connect(ctx.destination);
+  subOsc.start(now);
+  subOsc.stop(now + 0.2);
 };
 
-export const playCroak = (volume = 0.25) => {
+export const playCroak = (volume = 0.2) => {
   const ctx = getAudioContext();
   const now = ctx.currentTime;
-  const baseFreq = 100 + Math.random() * 40;
 
-  // Two-part croak: "rib-bit"
-  for (let part = 0; part < 2; part++) {
-    const offset = part * 0.12;
-    const freq = part === 0 ? baseFreq * 1.2 : baseFreq * 0.8;
-    const dur = part === 0 ? 0.1 : 0.18;
+  // Natural frog croak: dual-tone with throat resonance
+  const baseFreq = 90 + Math.random() * 30;
 
-    const osc1 = ctx.createOscillator();
-    osc1.type = 'sawtooth';
-    osc1.frequency.setValueAtTime(freq, now + offset);
-    osc1.frequency.exponentialRampToValueAtTime(freq * 0.6, now + offset + dur);
+  // Part 1: "Rrrrr" — short guttural intro
+  const introLen = 0.08;
+  const introOsc = ctx.createOscillator();
+  introOsc.type = 'sawtooth';
+  introOsc.frequency.setValueAtTime(baseFreq * 1.3, now);
+  introOsc.frequency.exponentialRampToValueAtTime(baseFreq * 1.0, now + introLen);
 
-    const osc2 = ctx.createOscillator();
-    osc2.type = 'square';
-    osc2.frequency.setValueAtTime(freq * 0.5, now + offset);
-    osc2.frequency.exponentialRampToValueAtTime(freq * 0.3, now + offset + dur);
+  // Amplitude modulation for vocal tremor
+  const tremoLfo = ctx.createOscillator();
+  tremoLfo.frequency.value = 35 + Math.random() * 20;
+  const tremoGain = ctx.createGain();
+  tremoGain.gain.value = 0.6;
+  tremoLfo.connect(tremoGain);
 
-    // Amplitude modulation for vocal cord vibration
-    const lfo = ctx.createOscillator();
-    lfo.frequency.value = 25 + Math.random() * 15;
-    const lfoGain = ctx.createGain();
-    lfoGain.gain.value = 0.5;
-    lfo.connect(lfoGain);
+  const introAmp = ctx.createGain();
+  introAmp.gain.value = 0.4;
+  tremoGain.connect(introAmp.gain);
 
-    const ampMod = ctx.createGain();
-    ampMod.gain.value = 0.5;
-    lfoGain.connect(ampMod.gain);
+  // Throat resonance filter
+  const introFilter = ctx.createBiquadFilter();
+  introFilter.type = 'bandpass';
+  introFilter.frequency.value = 350;
+  introFilter.Q.value = 5;
 
-    const filter = ctx.createBiquadFilter();
-    filter.type = 'bandpass';
-    filter.frequency.value = 400;
-    filter.Q.value = 4;
+  const introEnv = ctx.createGain();
+  introEnv.gain.setValueAtTime(0, now);
+  introEnv.gain.linearRampToValueAtTime(volume * 0.6, now + 0.01);
+  introEnv.gain.setValueAtTime(volume * 0.6, now + introLen * 0.7);
+  introEnv.gain.exponentialRampToValueAtTime(0.001, now + introLen);
 
-    const gain = ctx.createGain();
-    gain.gain.setValueAtTime(0, now + offset);
-    gain.gain.linearRampToValueAtTime(volume * (part === 0 ? 0.7 : 1), now + offset + 0.015);
-    gain.gain.exponentialRampToValueAtTime(0.001, now + offset + dur);
+  introOsc.connect(introAmp);
+  introAmp.connect(introFilter);
+  introFilter.connect(introEnv);
+  introEnv.connect(ctx.destination);
+  tremoLfo.start(now);
+  introOsc.start(now);
+  tremoLfo.stop(now + introLen + 0.01);
+  introOsc.stop(now + introLen + 0.01);
 
-    osc1.connect(ampMod);
-    osc2.connect(ampMod);
-    ampMod.connect(filter);
-    filter.connect(gain);
-    gain.connect(ctx.destination);
+  // Part 2: "Bit" — lower resonant pulse
+  const bitStart = now + 0.1;
+  const bitLen = 0.15;
 
-    lfo.start(now + offset);
-    osc1.start(now + offset);
-    osc2.start(now + offset);
-    lfo.stop(now + offset + dur + 0.01);
-    osc1.stop(now + offset + dur + 0.01);
-    osc2.stop(now + offset + dur + 0.01);
-  }
+  const bitOsc1 = ctx.createOscillator();
+  bitOsc1.type = 'sawtooth';
+  bitOsc1.frequency.setValueAtTime(baseFreq * 0.9, bitStart);
+  bitOsc1.frequency.exponentialRampToValueAtTime(baseFreq * 0.5, bitStart + bitLen);
+
+  const bitOsc2 = ctx.createOscillator();
+  bitOsc2.type = 'square';
+  bitOsc2.frequency.setValueAtTime(baseFreq * 0.45, bitStart);
+  bitOsc2.frequency.exponentialRampToValueAtTime(baseFreq * 0.25, bitStart + bitLen);
+
+  // Vocal tremor on second part too
+  const tremo2 = ctx.createOscillator();
+  tremo2.frequency.value = 30 + Math.random() * 15;
+  const tremo2G = ctx.createGain();
+  tremo2G.gain.value = 0.4;
+  tremo2.connect(tremo2G);
+
+  const bitAmp = ctx.createGain();
+  bitAmp.gain.value = 0.5;
+  tremo2G.connect(bitAmp.gain);
+
+  // Wider resonance for body
+  const bitFilter = ctx.createBiquadFilter();
+  bitFilter.type = 'bandpass';
+  bitFilter.frequency.value = 300;
+  bitFilter.Q.value = 3;
+
+  // Secondary formant
+  const bitFilter2 = ctx.createBiquadFilter();
+  bitFilter2.type = 'peaking';
+  bitFilter2.frequency.value = 700;
+  bitFilter2.gain.value = 6;
+  bitFilter2.Q.value = 2;
+
+  const bitEnv = ctx.createGain();
+  bitEnv.gain.setValueAtTime(0, bitStart);
+  bitEnv.gain.linearRampToValueAtTime(volume, bitStart + 0.01);
+  bitEnv.gain.setValueAtTime(volume * 0.9, bitStart + bitLen * 0.5);
+  bitEnv.gain.exponentialRampToValueAtTime(0.001, bitStart + bitLen);
+
+  bitOsc1.connect(bitAmp);
+  bitOsc2.connect(bitAmp);
+  bitAmp.connect(bitFilter);
+  bitFilter.connect(bitFilter2);
+  bitFilter2.connect(bitEnv);
+  bitEnv.connect(ctx.destination);
+  tremo2.start(bitStart);
+  bitOsc1.start(bitStart);
+  bitOsc2.start(bitStart);
+  tremo2.stop(bitStart + bitLen + 0.01);
+  bitOsc1.stop(bitStart + bitLen + 0.01);
+  bitOsc2.stop(bitStart + bitLen + 0.01);
 };
 
 export const playShoot = (power = 1, volume = 0.3) => {
   const ctx = getAudioContext();
   const now = ctx.currentTime;
+  const p = Math.min(power, 1);
 
-  // Rubber snap
-  const osc = ctx.createOscillator();
-  osc.type = 'triangle';
-  osc.frequency.setValueAtTime(250 + power * 150, now);
-  osc.frequency.exponentialRampToValueAtTime(60, now + 0.12);
+  // Layer 1: Rubber band snap — pitched down triangle with fast decay
+  const snapOsc = ctx.createOscillator();
+  snapOsc.type = 'triangle';
+  snapOsc.frequency.setValueAtTime(300 + p * 200, now);
+  snapOsc.frequency.exponentialRampToValueAtTime(50, now + 0.08);
 
-  const gain = ctx.createGain();
-  gain.gain.setValueAtTime(volume * Math.min(power, 1) * 0.6, now);
-  gain.gain.exponentialRampToValueAtTime(0.001, now + 0.15);
-
-  osc.connect(gain);
-  gain.connect(ctx.destination);
-  osc.start(now);
-  osc.stop(now + 0.15);
-
-  // Snap noise
-  const snapBuf = ctx.createBuffer(1, ctx.sampleRate * 0.04, ctx.sampleRate);
-  const snapData = snapBuf.getChannelData(0);
-  for (let i = 0; i < snapBuf.length; i++) {
-    const t = i / snapBuf.length;
-    snapData[i] = (Math.random() * 2 - 1) * Math.exp(-t * 40);
-  }
-  const snapSource = ctx.createBufferSource();
-  snapSource.buffer = snapBuf;
   const snapGain = ctx.createGain();
-  snapGain.gain.setValueAtTime(volume * 0.4, now);
-  snapGain.gain.exponentialRampToValueAtTime(0.001, now + 0.04);
-  snapSource.connect(snapGain);
-  snapGain.connect(ctx.destination);
-  snapSource.start(now);
-  snapSource.stop(now + 0.04);
+  snapGain.gain.setValueAtTime(volume * p * 0.5, now);
+  snapGain.gain.exponentialRampToValueAtTime(0.001, now + 0.1);
 
-  // Whoosh
-  const whooshBuf = ctx.createBuffer(1, ctx.sampleRate * 0.2, ctx.sampleRate);
-  const whooshData = whooshBuf.getChannelData(0);
-  for (let i = 0; i < whooshBuf.length; i++) {
-    const t = i / whooshBuf.length;
-    whooshData[i] = (Math.random() * 2 - 1) * Math.exp(-t * 10) * 0.2;
+  snapOsc.connect(snapGain);
+  snapGain.connect(ctx.destination);
+  snapOsc.start(now);
+  snapOsc.stop(now + 0.1);
+
+  // Layer 2: Thwack transient — very short noise burst
+  const thwackLen = Math.floor(ctx.sampleRate * 0.015);
+  const thwackBuf = ctx.createBuffer(1, thwackLen, ctx.sampleRate);
+  const thwackData = thwackBuf.getChannelData(0);
+  for (let i = 0; i < thwackLen; i++) {
+    const t = i / thwackLen;
+    thwackData[i] = (Math.random() * 2 - 1) * Math.exp(-t * 80);
   }
-  const whoosh = ctx.createBufferSource();
-  whoosh.buffer = whooshBuf;
-  const whooshFilter = ctx.createBiquadFilter();
-  whooshFilter.type = 'bandpass';
-  whooshFilter.frequency.setValueAtTime(1200, now + 0.02);
-  whooshFilter.frequency.exponentialRampToValueAtTime(200, now + 0.2);
+  const thwackSrc = ctx.createBufferSource();
+  thwackSrc.buffer = thwackBuf;
+  const thwackGain = ctx.createGain();
+  thwackGain.gain.setValueAtTime(volume * 0.6, now);
+  thwackGain.gain.exponentialRampToValueAtTime(0.001, now + 0.02);
+  thwackSrc.connect(thwackGain);
+  thwackGain.connect(ctx.destination);
+  thwackSrc.start(now);
+  thwackSrc.stop(now + 0.02);
+
+  // Layer 3: Air whoosh — filtered noise following the projectile
+  const whooshLen = Math.floor(ctx.sampleRate * 0.15);
+  const whooshBuf = ctx.createBuffer(1, whooshLen, ctx.sampleRate);
+  const whooshData = whooshBuf.getChannelData(0);
+  for (let i = 0; i < whooshLen; i++) {
+    const t = i / whooshLen;
+    // Bell-shaped envelope peaking at ~30%
+    const env = Math.sin(t * Math.PI) * Math.exp(-t * 3);
+    whooshData[i] = (Math.random() * 2 - 1) * env;
+  }
+  const whooshSrc = ctx.createBufferSource();
+  whooshSrc.buffer = whooshBuf;
+
+  const whooshBp = ctx.createBiquadFilter();
+  whooshBp.type = 'bandpass';
+  whooshBp.frequency.setValueAtTime(1500, now + 0.01);
+  whooshBp.frequency.exponentialRampToValueAtTime(300, now + 0.15);
+  whooshBp.Q.value = 0.8;
+
   const whooshGain = ctx.createGain();
-  whooshGain.gain.setValueAtTime(volume * 0.15, now + 0.02);
-  whooshGain.gain.exponentialRampToValueAtTime(0.001, now + 0.2);
-  whoosh.connect(whooshFilter);
-  whooshFilter.connect(whooshGain);
+  whooshGain.gain.setValueAtTime(volume * 0.12, now + 0.01);
+  whooshGain.gain.exponentialRampToValueAtTime(0.001, now + 0.15);
+
+  whooshSrc.connect(whooshBp);
+  whooshBp.connect(whooshGain);
   whooshGain.connect(ctx.destination);
-  whoosh.start(now + 0.02);
-  whoosh.stop(now + 0.22);
+  whooshSrc.start(now + 0.01);
+  whooshSrc.stop(now + 0.16);
 };
 
-export const playFrogJump = (volume = 0.2) => {
+export const playFrogJump = (volume = 0.15) => {
   const ctx = getAudioContext();
   const now = ctx.currentTime;
 
+  // Small body leaving water — short upward chirp + tiny splash
   const osc = ctx.createOscillator();
   osc.type = 'sine';
-  osc.frequency.setValueAtTime(180, now);
-  osc.frequency.exponentialRampToValueAtTime(500, now + 0.08);
-  osc.frequency.exponentialRampToValueAtTime(120, now + 0.2);
+  osc.frequency.setValueAtTime(150, now);
+  osc.frequency.exponentialRampToValueAtTime(400, now + 0.06);
+  osc.frequency.exponentialRampToValueAtTime(100, now + 0.18);
 
   const gain = ctx.createGain();
-  gain.gain.setValueAtTime(volume * 0.7, now);
-  gain.gain.exponentialRampToValueAtTime(0.001, now + 0.22);
+  gain.gain.setValueAtTime(volume * 0.5, now);
+  gain.gain.exponentialRampToValueAtTime(0.001, now + 0.2);
 
   osc.connect(gain);
   gain.connect(ctx.destination);
   osc.start(now);
-  osc.stop(now + 0.22);
+  osc.stop(now + 0.2);
+
+  // Tiny splash accompanying the jump
+  const splashLen = Math.floor(ctx.sampleRate * 0.08);
+  const splashBuf = ctx.createBuffer(1, splashLen, ctx.sampleRate);
+  const splashData = splashBuf.getChannelData(0);
+  for (let i = 0; i < splashLen; i++) {
+    const t = i / splashLen;
+    splashData[i] = (Math.random() * 2 - 1) * Math.exp(-t * 25);
+  }
+  const splashSrc = ctx.createBufferSource();
+  splashSrc.buffer = splashBuf;
+  const splashLp = ctx.createBiquadFilter();
+  splashLp.type = 'lowpass';
+  splashLp.frequency.value = 2500;
+  const splashGain = ctx.createGain();
+  splashGain.gain.setValueAtTime(volume * 0.3, now);
+  splashGain.gain.exponentialRampToValueAtTime(0.001, now + 0.08);
+  splashSrc.connect(splashLp);
+  splashLp.connect(splashGain);
+  splashGain.connect(ctx.destination);
+  splashSrc.start(now);
+  splashSrc.stop(now + 0.08);
 };
