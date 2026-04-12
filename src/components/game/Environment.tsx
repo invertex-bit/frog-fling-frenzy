@@ -39,25 +39,43 @@ const Rock = ({ position, scale = 1, color = "#888" }: { position: [number, numb
 const Reed = ({ position }: { position: [number, number, number] }) => {
   const ref = useRef<THREE.Group>(null);
   const offset = useMemo(() => Math.random() * Math.PI * 2, []);
+  const height = useMemo(() => 0.8 + Math.random() * 0.6, []);
+  const lean = useMemo(() => (Math.random() - 0.5) * 0.15, []);
 
   useFrame((state) => {
     if (ref.current) {
       const t = state.clock.elapsedTime + offset;
-      ref.current.rotation.z = Math.sin(t * 0.8) * 0.05;
-      ref.current.rotation.x = Math.cos(t * 0.6) * 0.03;
+      ref.current.rotation.z = lean + Math.sin(t * 0.6) * 0.04;
+      ref.current.rotation.x = Math.cos(t * 0.4) * 0.02;
     }
   });
 
   return (
     <group ref={ref} position={position}>
-      <mesh position={[0, 0.6, 0]}>
-        <cylinderGeometry args={[0.02, 0.03, 1.2, 6]} />
+      {/* Main stem - tapered */}
+      <mesh position={[0, height * 0.5, 0]}>
+        <cylinderGeometry args={[0.015, 0.035, height, 6]} />
+        <meshStandardMaterial color="#5a7a30" flatShading />
+      </mesh>
+      {/* Leaf blade 1 */}
+      <mesh position={[-0.05, height * 0.4, 0.02]} rotation={[0.1, 0.2, -0.3]}>
+        <boxGeometry args={[0.15, 0.4, 0.01]} />
         <meshStandardMaterial color="#6B8E23" flatShading />
       </mesh>
-      {/* Reed top */}
-      <mesh position={[0, 1.3, 0]}>
-        <cylinderGeometry args={[0.04, 0.02, 0.25, 6]} />
-        <meshStandardMaterial color="#8B7355" flatShading />
+      {/* Leaf blade 2 */}
+      <mesh position={[0.04, height * 0.6, -0.01]} rotation={[-0.05, -0.15, 0.2]}>
+        <boxGeometry args={[0.12, 0.35, 0.01]} />
+        <meshStandardMaterial color="#7a9e33" flatShading />
+      </mesh>
+      {/* Cattail top (brown seed head) */}
+      <mesh position={[0, height + 0.1, 0]}>
+        <cylinderGeometry args={[0.035, 0.03, 0.18, 6]} />
+        <meshStandardMaterial color="#6B4226" flatShading />
+      </mesh>
+      {/* Tip spike */}
+      <mesh position={[0, height + 0.25, 0]}>
+        <coneGeometry args={[0.015, 0.1, 4]} />
+        <meshStandardMaterial color="#7a9e33" flatShading />
       </mesh>
     </group>
   );
@@ -89,61 +107,105 @@ const Mushroom = ({ position }: { position: [number, number, number] }) => (
   </group>
 );
 
+const Sun = () => {
+  const ref = useRef<THREE.Group>(null);
+
+  useFrame((state) => {
+    if (ref.current) {
+      ref.current.rotation.z = state.clock.elapsedTime * 0.05;
+    }
+  });
+
+  return (
+    <group ref={ref} position={[-20, 18, -15]}>
+      {/* Sun body */}
+      <mesh>
+        <sphereGeometry args={[2, 16, 12]} />
+        <meshBasicMaterial color="#FFD700" />
+      </mesh>
+      {/* Glow */}
+      <mesh>
+        <sphereGeometry args={[2.5, 16, 12]} />
+        <meshBasicMaterial color="#FFF8DC" transparent opacity={0.3} />
+      </mesh>
+      {/* Rays */}
+      {Array.from({ length: 8 }).map((_, i) => {
+        const angle = (i / 8) * Math.PI * 2;
+        return (
+          <mesh key={i} position={[Math.cos(angle) * 3.5, Math.sin(angle) * 3.5, 0]} rotation={[0, 0, angle]}>
+            <boxGeometry args={[0.3, 1.5, 0.3]} />
+            <meshBasicMaterial color="#FFD700" />
+          </mesh>
+        );
+      })}
+    </group>
+  );
+};
+
 const Environment = () => {
   return (
     <group>
-      {/* Trees around the pond */}
-      <Tree position={[-8, -0.6, -4]} scale={1.2} />
-      <Tree position={[-10, -0.6, -8]} scale={0.9} />
-      <Tree position={[-9, -0.6, -14]} scale={1.1} />
-      <Tree position={[8, -0.6, -5]} scale={1.0} />
-      <Tree position={[10, -0.6, -10]} scale={1.3} />
-      <Tree position={[7, -0.6, -15]} scale={0.8} />
-      <Tree position={[-6, -0.6, -18]} scale={1.0} />
-      <Tree position={[5, -0.6, -18]} scale={1.1} />
-      <Tree position={[-12, -0.6, -12]} scale={0.7} />
-      <Tree position={[12, -0.6, -7]} scale={0.9} />
+      {/* Sun */}
+      <Sun />
+
+      {/* Trees on dry land - moved further from pond (pond center at z=-8, radius ~12) */}
+      <Tree position={[-14, -0.6, -4]} scale={1.2} />
+      <Tree position={[-15, -0.6, -8]} scale={0.9} />
+      <Tree position={[-14, -0.6, -14]} scale={1.1} />
+      <Tree position={[14, -0.6, -5]} scale={1.0} />
+      <Tree position={[15, -0.6, -10]} scale={1.3} />
+      <Tree position={[14, -0.6, -15]} scale={0.8} />
+      <Tree position={[-13, -0.6, -18]} scale={1.0} />
+      <Tree position={[13, -0.6, -18]} scale={1.1} />
+      <Tree position={[-16, -0.6, -12]} scale={0.7} />
+      <Tree position={[16, -0.6, -7]} scale={0.9} />
+      {/* Trees near camera / foreground */}
+      <Tree position={[-8, -0.6, 3]} scale={1.0} />
+      <Tree position={[9, -0.6, 2]} scale={0.8} />
 
       {/* Rocks near pond edge */}
-      <Rock position={[-5, -0.5, -2]} scale={0.8} color="#777" />
-      <Rock position={[6, -0.5, -3]} scale={1.1} color="#666" />
-      <Rock position={[-7, -0.5, -14]} scale={0.6} color="#888" />
-      <Rock position={[7, -0.5, -16]} scale={0.9} color="#777" />
-      <Rock position={[3, -0.5, -1]} scale={0.5} color="#999" />
-      <Rock position={[-3, -0.5, -17]} scale={0.7} color="#666" />
+      <Rock position={[-6, -0.5, -1]} scale={0.8} color="#777" />
+      <Rock position={[7, -0.5, -2]} scale={1.1} color="#666" />
+      <Rock position={[-8, -0.5, -18]} scale={0.6} color="#888" />
+      <Rock position={[8, -0.5, -18]} scale={0.9} color="#777" />
+      <Rock position={[4, -0.5, 0]} scale={0.5} color="#999" />
+      <Rock position={[-4, -0.5, -19]} scale={0.7} color="#666" />
 
-      {/* Reeds at pond edges */}
-      <Reed position={[-5.5, -0.5, -3]} />
-      <Reed position={[-5.8, -0.5, -3.3]} />
-      <Reed position={[-5.3, -0.5, -3.6]} />
-      <Reed position={[6.2, -0.5, -4]} />
-      <Reed position={[6.5, -0.5, -3.7]} />
-      <Reed position={[-6.5, -0.5, -12]} />
-      <Reed position={[-6.8, -0.5, -12.5]} />
-      <Reed position={[5.5, -0.5, -15]} />
-      <Reed position={[5.8, -0.5, -15.3]} />
-      <Reed position={[5.2, -0.5, -14.7]} />
+      {/* Reeds at pond edges - clustered naturally */}
+      <Reed position={[-5.5, -0.5, -1.5]} />
+      <Reed position={[-5.8, -0.5, -1.8]} />
+      <Reed position={[-5.2, -0.5, -1.3]} />
+      <Reed position={[-5.6, -0.5, -1.0]} />
+      <Reed position={[6.2, -0.5, -2.5]} />
+      <Reed position={[6.5, -0.5, -2.2]} />
+      <Reed position={[6.0, -0.5, -2.8]} />
+      <Reed position={[-7.0, -0.5, -15]} />
+      <Reed position={[-7.3, -0.5, -15.3]} />
+      <Reed position={[-6.8, -0.5, -14.8]} />
+      <Reed position={[6.0, -0.5, -16]} />
+      <Reed position={[6.3, -0.5, -16.3]} />
+      <Reed position={[5.8, -0.5, -15.7]} />
 
       {/* Flowers scattered on ground */}
-      <Flower position={[-4, -0.55, -1]} color="#FF69B4" />
-      <Flower position={[4, -0.55, -2]} color="#FFD700" />
-      <Flower position={[-8, -0.55, -6]} color="#FF6347" />
-      <Flower position={[9, -0.55, -8]} color="#DDA0DD" />
-      <Flower position={[-7, -0.55, -16]} color="#87CEEB" />
-      <Flower position={[6, -0.55, -17]} color="#FF69B4" />
+      <Flower position={[-5, -0.55, 1]} color="#FF69B4" />
+      <Flower position={[5, -0.55, 0]} color="#FFD700" />
+      <Flower position={[-12, -0.55, -6]} color="#FF6347" />
+      <Flower position={[13, -0.55, -8]} color="#DDA0DD" />
+      <Flower position={[-12, -0.55, -16]} color="#87CEEB" />
+      <Flower position={[12, -0.55, -17]} color="#FF69B4" />
 
       {/* Mushrooms */}
-      <Mushroom position={[-9.5, -0.55, -5]} />
-      <Mushroom position={[9, -0.55, -12]} />
-      <Mushroom position={[-11, -0.55, -10]} />
+      <Mushroom position={[-13, -0.55, -5]} />
+      <Mushroom position={[13, -0.55, -12]} />
+      <Mushroom position={[-15, -0.55, -10]} />
 
-      {/* Grass tufts (simple low-poly) */}
-      <GrassPatch position={[-3, -0.58, 0]} />
-      <GrassPatch position={[2, -0.58, -1]} />
-      <GrassPatch position={[-6, -0.58, -7]} />
-      <GrassPatch position={[7, -0.58, -6]} />
-      <GrassPatch position={[-5, -0.58, -16]} />
-      <GrassPatch position={[4, -0.58, -19]} />
+      {/* Grass tufts */}
+      <GrassPatch position={[-3, -0.58, 1]} />
+      <GrassPatch position={[2, -0.58, 0]} />
+      <GrassPatch position={[-7, -0.58, -1]} />
+      <GrassPatch position={[8, -0.58, -1]} />
+      <GrassPatch position={[-10, -0.58, -18]} />
+      <GrassPatch position={[10, -0.58, -19]} />
     </group>
   );
 };
