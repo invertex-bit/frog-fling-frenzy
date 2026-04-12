@@ -80,8 +80,8 @@ const InputHandler = ({
       if (!isDragging.current) return;
       const dx = (e.clientX - startPoint.current.x) / window.innerWidth;
       const dy = (e.clientY - startPoint.current.y) / window.innerHeight;
-      // Pull direction matches mouse: drag left = rubber band goes left, drag down = goes down/back
-      const newPull = new THREE.Vector3(dx * 2, -dy * 2, -dy * 3);
+      // Drag down = pull back toward player (positive z), rubber stretches toward camera
+      const newPull = new THREE.Vector3(dx * 2, -dy * 2, dy * 3);
       setPullBack(newPull);
     };
 
@@ -93,7 +93,7 @@ const InputHandler = ({
       const pb = pullBackRef.current;
       const power = pb.length() * 15;
       if (power > 0.5) {
-        // Shoot opposite to pull direction
+        // Shoot forward (opposite to pull): negative Z, upward arc
         const vel = new THREE.Vector3(
           -pb.x * 8,
           Math.abs(pb.y) * 10 + 3,
@@ -226,7 +226,6 @@ const GameWorld = () => {
 
   const handleFrogDodge = useCallback(
     (id: string) => {
-      // Called when dodge animation completes
       setFrogs((prev) =>
         prev.map((f) => {
           if (f.id === id) {
