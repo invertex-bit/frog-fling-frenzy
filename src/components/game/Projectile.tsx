@@ -42,7 +42,12 @@ const Projectile = ({ id, startPosition, velocity, color, onHitWater, onRemove, 
 
     if (pos.current.y < -0.5) {
       alive.current = false;
-      onHitWater(pos.current.clone());
+      // Only create ripple if landing in pond (center 0,-0.5,-8, radius 12)
+      const dx = pos.current.x - 0;
+      const dz = pos.current.z - (-8);
+      if (Math.sqrt(dx * dx + dz * dz) <= 12) {
+        onHitWater(pos.current.clone());
+      }
       onRemove(id);
     }
 
