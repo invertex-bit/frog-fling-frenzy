@@ -13,14 +13,15 @@ import { playSplash, playShoot, playFrogJump } from './SoundEffects';
 
 const STONE_COLORS = ['#e53935', '#fdd835', '#1e88e5', '#43a047'];
 const LILY_PAD_POSITIONS: [number, number, number][] = [
-  [-3, -0.45, -7],
+  [-1.5, -0.45, -7],
   [2, -0.45, -9],
-  [-1, -0.45, -11],
-  [4, -0.45, -6],
-  [-4, -0.45, -10],
-  [0, -0.45, -13],
+  [-0.5, -0.45, -11],
+  [3.5, -0.45, -6],
+  [-2, -0.45, -10],
+  [0.5, -0.45, -13],
   [3, -0.45, -12],
 ];
+
 
 interface FrogData {
   id: string;

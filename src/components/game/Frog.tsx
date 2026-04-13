@@ -1,7 +1,7 @@
 import { useRef, useState, useEffect, useCallback } from 'react';
 import { useFrame } from '@react-three/fiber';
 import * as THREE from 'three';
-import { playCroak } from './SoundEffects';
+import { playCroak, playFrogDown, playFrogUp } from './SoundEffects';
 
 type FrogState = 'idle' | 'spawning' | 'dodging' | 'gone';
 
@@ -27,8 +27,8 @@ const Frog = ({ position, id, onDodge, shouldDodge, isSpawning = false }: FrogPr
 
   const triggerDodge = useCallback(() => {
     if (state === 'idle') {
-      // Croak before jumping
       playCroak();
+      setTimeout(() => playFrogDown(), 200);
       setState('dodging');
       progress.current = 0;
       hasCroaked.current = true;
@@ -43,8 +43,8 @@ const Frog = ({ position, id, onDodge, shouldDodge, isSpawning = false }: FrogPr
 
   useEffect(() => {
     if (isSpawning) {
-      // Croak when spawning
-      playCroak();
+      playFrogUp();
+      setTimeout(() => playCroak(), 400);
       setState('spawning');
       progress.current = 0;
     }
