@@ -9,7 +9,7 @@ import Slingshot from './Slingshot';
 import Projectile from './Projectile';
 import Ripple from './Ripple';
 import Environment from './Environment';
-import { plasSplash, playShoot, playFrogJump } from './SoundEffects';
+import { playSplash, playShoot, playFrogJump } from './SoundEffects';
 
 const STONE_COLORS = ['#e53935', '#fdd835', '#1e88e5', '#43a047'];
 const LILY_PAD_POSITIONS: [number, number, number][] = [
