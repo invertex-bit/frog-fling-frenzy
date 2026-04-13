@@ -129,20 +129,20 @@ const Sun = () => {
   });
 
   return (
-    <group ref={ref} position={[-8, 15, -12]}>
+    <group ref={ref} position={[-12, 22, -25]}>
       <mesh>
-        <sphereGeometry args={[2, 16, 12]} />
+        <sphereGeometry args={[3, 16, 12]} />
         <meshBasicMaterial color="#FFD700" />
       </mesh>
       <mesh>
-        <sphereGeometry args={[2.5, 16, 12]} />
+        <sphereGeometry args={[3.8, 16, 12]} />
         <meshBasicMaterial color="#FFF8DC" transparent opacity={0.3} />
       </mesh>
-      {Array.from({ length: 10 }).map((_, i) => {
-        const angle = (i / 10) * Math.PI * 2;
+      {Array.from({ length: 12 }).map((_, i) => {
+        const angle = (i / 12) * Math.PI * 2;
         return (
-          <mesh key={i} position={[Math.cos(angle) * 3.5, Math.sin(angle) * 3.5, 0]} rotation={[0, 0, angle]}>
-            <boxGeometry args={[0.3, 1.5, 0.3]} />
+          <mesh key={i} position={[Math.cos(angle) * 5, Math.sin(angle) * 5, 0]} rotation={[0, 0, angle]}>
+            <boxGeometry args={[0.4, 2.0, 0.4]} />
             <meshBasicMaterial color="#FFD700" />
           </mesh>
         );
@@ -212,7 +212,19 @@ const Environment = () => {
       <Flower position={[-9, -0.55, 2]} color="#FFD700" />
       <Flower position={[10, -0.55, 1]} color="#FF6347" />
 
-      {/* Mushrooms - many more */}
+      {/* Trees and mushrooms above water (center top) */}
+      <Tree position={[-2, -0.6, -17]} scale={0.9} />
+      <Tree position={[2, -0.6, -18]} scale={1.0} />
+      <RoundTree position={[0, -0.6, -16]} scale={0.8} />
+      <RoundTree position={[-3.5, -0.6, -18]} scale={1.0} />
+      <RoundTree position={[4, -0.6, -17]} scale={0.9} />
+      <Tree position={[1, -0.6, -19]} scale={0.7} />
+      <Mushroom position={[-1, -0.55, -16]} scale={1.2} />
+      <Mushroom position={[1.5, -0.55, -17]} scale={0.9} />
+      <Mushroom position={[3, -0.55, -16.5]} scale={1.0} />
+      <Mushroom position={[-3, -0.55, -17.5]} scale={0.8} />
+
+      {/* Mushrooms scattered */}
       <Mushroom position={[-13, -0.55, -5]} />
       <Mushroom position={[13, -0.55, -12]} />
       <Mushroom position={[-15, -0.55, -10]} />

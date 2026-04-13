@@ -2,6 +2,20 @@
 const audioBufferCache: Record<string, AudioBuffer> = {};
 let audioCtx: AudioContext | null = null;
 
+// Global volume multipliers (0-1)
+let sfxVolume = 1;
+let musicVolume = 0.5;
+let bgMusicSource: AudioBufferSourceNode | null = null;
+let bgMusicGain: GainNode | null = null;
+
+export const setSfxVolume = (v: number) => { sfxVolume = v; };
+export const getSfxVolume = () => sfxVolume;
+export const setMusicVolume = (v: number) => {
+  musicVolume = v;
+  if (bgMusicGain) bgMusicGain.gain.value = v;
+};
+export const getMusicVolume = () => musicVolume;
+
 const getAudioContext = () => {
   if (!audioCtx) {
     audioCtx = new AudioContext();
@@ -27,10 +41,9 @@ const playAudio = (url: string, volume = 0.5) => {
   loadAudio(url).then((buffer) => {
     const source = ctx.createBufferSource();
     source.buffer = buffer;
-    // Random pitch between 0.8 and 1.2
     source.playbackRate.value = 0.8 + Math.random() * 0.4;
     const gainNode = ctx.createGain();
-    gainNode.gain.value = volume;
+    gainNode.gain.value = volume * sfxVolume;
     source.connect(gainNode);
     gainNode.connect(ctx.destination);
     source.start(0);
@@ -43,15 +56,15 @@ export const playCroak = (volume = 0.4) => {
   playAudio(`${AUDIO_BASE}/frogkva.mp3`, volume);
 };
 
-export const playSplash = (volume = 0.5) => {
+export const playSplash = (volume = 0.25) => {
   playAudio(`${AUDIO_BASE}/stodown.mp3`, volume);
 };
 
-export const playFrogDown = (volume = 0.5) => {
+export const playFrogDown = (volume = 0.25) => {
   playAudio(`${AUDIO_BASE}/frogdown.mp3`, volume);
 };
 
-export const playFrogUp = (volume = 0.5) => {
+export const playFrogUp = (volume = 0.25) => {
   playAudio(`${AUDIO_BASE}/frogup.mp3`, volume);
 };
 
@@ -59,7 +72,35 @@ export const playShoot = (_power = 1, volume = 0.5) => {
   playAudio(`${AUDIO_BASE}/slingshot_fire.mp3`, volume);
 };
 
-// Keep playFrogJump as alias for frogdown
-export const playFrogJump = (volume = 0.4) => {
+export const playFrogJump = (volume = 0.2) => {
   playFrogDown(volume);
+};
+
+// Background music
+export const startBackgroundMusic = () => {
+  const ctx = getAudioContext();
+  const url = `${AUDIO_BASE}/Ripples_in_the_Glass.mp3`;
+  loadAudio(url).then((buffer) => {
+    if (bgMusicSource) {
+      try { bgMusicSource.stop(); } catch {}
+    }
+    const source = ctx.createBufferSource();
+    source.buffer = buffer;
+    source.loop = true;
+    const gain = ctx.createGain();
+    gain.gain.value = musicVolume;
+    source.connect(gain);
+    gain.connect(ctx.destination);
+    source.start(0);
+    bgMusicSource = source;
+    bgMusicGain = gain;
+  }).catch(() => {});
+};
+
+export const stopBackgroundMusic = () => {
+  if (bgMusicSource) {
+    try { bgMusicSource.stop(); } catch {}
+    bgMusicSource = null;
+    bgMusicGain = null;
+  }
 };
