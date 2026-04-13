@@ -9,7 +9,7 @@ import Slingshot from './Slingshot';
 import Projectile from './Projectile';
 import Ripple from './Ripple';
 import Environment from './Environment';
-import { playSplash, playShoot, playFrogJump } from './SoundEffects';
+import { playSplash, playShoot, playFrogJump, startBackgroundMusic } from './SoundEffects';
 
 const STONE_COLORS = ['#e53935', '#fdd835', '#1e88e5', '#43a047'];
 const LILY_PAD_POSITIONS: [number, number, number][] = [
@@ -325,8 +325,20 @@ const GameWorld = () => {
 };
 
 const GameScene = () => {
+  const musicStarted = useRef(false);
+
+  const handleInteraction = useCallback(() => {
+    if (!musicStarted.current) {
+      musicStarted.current = true;
+      startBackgroundMusic();
+    }
+  }, []);
+
   return (
-    <div style={{ width: '100vw', height: '100vh', cursor: 'crosshair' }}>
+    <div
+      style={{ width: '100vw', height: '100vh', cursor: 'crosshair' }}
+      onPointerDown={handleInteraction}
+    >
       <Canvas
         camera={{ position: [0, 1, 4], fov: 60, near: 0.1, far: 100 }}
         gl={{ antialias: true }}
