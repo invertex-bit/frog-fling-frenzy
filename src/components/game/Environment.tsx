@@ -1,16 +1,14 @@
 import { useMemo } from 'react';
 import * as THREE from 'three';
-import { useFrame } from '@react-three/fiber';
 import { useRef } from 'react';
+import { useFrame } from '@react-three/fiber';
 
 const Tree = ({ position, scale = 1 }: { position: [number, number, number]; scale?: number }) => (
   <group position={position} scale={scale}>
-    {/* Trunk */}
     <mesh position={[0, 0.8, 0]}>
       <cylinderGeometry args={[0.15, 0.2, 1.6, 8]} />
       <meshStandardMaterial color="#5D4037" flatShading />
     </mesh>
-    {/* Foliage layers */}
     <mesh position={[0, 2.0, 0]}>
       <coneGeometry args={[1.0, 1.5, 8]} />
       <meshStandardMaterial color="#2E7D32" flatShading />
@@ -70,8 +68,8 @@ const Flower = ({ position, color }: { position: [number, number, number]; color
   </group>
 );
 
-const Mushroom = ({ position }: { position: [number, number, number] }) => (
-  <group position={position}>
+const Mushroom = ({ position, scale = 1 }: { position: [number, number, number]; scale?: number }) => (
+  <group position={position} scale={scale}>
     <mesh position={[0, 0.08, 0]}>
       <cylinderGeometry args={[0.03, 0.04, 0.16, 6]} />
       <meshStandardMaterial color="#F5F5DC" flatShading />
@@ -83,31 +81,43 @@ const Mushroom = ({ position }: { position: [number, number, number] }) => (
   </group>
 );
 
-const GrassPatch = ({ position }: { position: [number, number, number] }) => (
-  <group position={position}>
-    {[0, 0.4, 0.8, -0.3, -0.6].map((offsetX, i) => (
-      <mesh key={i} position={[offsetX, 0.12, i * 0.1 - 0.2]} rotation={[0, 0, (i - 2) * 0.15]}>
-        <coneGeometry args={[0.03, 0.25, 4]} />
-        <meshStandardMaterial color={i % 2 === 0 ? "#4CAF50" : "#66BB6A"} flatShading />
-      </mesh>
-    ))}
-  </group>
-);
+const GrassPatch = ({ position }: { position: [number, number, number] }) => {
+  const offsets = useMemo(() => [0, 0.4, 0.8, -0.3, -0.6], []);
+  return (
+    <group position={position}>
+      {offsets.map((offsetX, i) => (
+        <mesh key={i} position={[offsetX, 0.12, i * 0.1 - 0.2]} rotation={[0, 0, (i - 2) * 0.15]}>
+          <coneGeometry args={[0.03, 0.25, 4]} />
+          <meshStandardMaterial color={i % 2 === 0 ? "#4CAF50" : "#66BB6A"} flatShading />
+        </mesh>
+      ))}
+    </group>
+  );
+};
 
-const GrassClump = ({ position }: { position: [number, number, number] }) => (
-  <group position={position}>
-    {Array.from({ length: 7 }).map((_, i) => {
+const GrassClump = ({ position }: { position: [number, number, number] }) => {
+  const blades = useMemo(() => {
+    return Array.from({ length: 7 }).map((_, i) => {
       const angle = (i / 7) * Math.PI * 2;
       const r = Math.random() * 0.3;
-      return (
-        <mesh key={i} position={[Math.cos(angle) * r, 0.1, Math.sin(angle) * r]} rotation={[0, 0, (Math.random() - 0.5) * 0.3]}>
-          <coneGeometry args={[0.025, 0.2 + Math.random() * 0.15, 4]} />
-          <meshStandardMaterial color={i % 3 === 0 ? "#4CAF50" : i % 3 === 1 ? "#66BB6A" : "#558B2F"} flatShading />
+      const height = 0.2 + Math.random() * 0.15;
+      const tilt = (Math.random() - 0.5) * 0.3;
+      const colorIdx = i % 3;
+      return { x: Math.cos(angle) * r, z: Math.sin(angle) * r, height, tilt, colorIdx };
+    });
+  }, []);
+
+  return (
+    <group position={position}>
+      {blades.map((b, i) => (
+        <mesh key={i} position={[b.x, 0.1, b.z]} rotation={[0, 0, b.tilt]}>
+          <coneGeometry args={[0.025, b.height, 4]} />
+          <meshStandardMaterial color={b.colorIdx === 0 ? "#4CAF50" : b.colorIdx === 1 ? "#66BB6A" : "#558B2F"} flatShading />
         </mesh>
-      );
-    })}
-  </group>
-);
+      ))}
+    </group>
+  );
+};
 
 const Sun = () => {
   const ref = useRef<THREE.Group>(null);
@@ -119,20 +129,20 @@ const Sun = () => {
   });
 
   return (
-    <group ref={ref} position={[-25, 25, -20]}>
+    <group ref={ref} position={[-8, 15, -12]}>
       <mesh>
-        <sphereGeometry args={[3, 16, 12]} />
+        <sphereGeometry args={[2, 16, 12]} />
         <meshBasicMaterial color="#FFD700" />
       </mesh>
       <mesh>
-        <sphereGeometry args={[3.8, 16, 12]} />
+        <sphereGeometry args={[2.5, 16, 12]} />
         <meshBasicMaterial color="#FFF8DC" transparent opacity={0.3} />
       </mesh>
       {Array.from({ length: 10 }).map((_, i) => {
         const angle = (i / 10) * Math.PI * 2;
         return (
-          <mesh key={i} position={[Math.cos(angle) * 5, Math.sin(angle) * 5, 0]} rotation={[0, 0, angle]}>
-            <boxGeometry args={[0.4, 2.0, 0.4]} />
+          <mesh key={i} position={[Math.cos(angle) * 3.5, Math.sin(angle) * 3.5, 0]} rotation={[0, 0, angle]}>
+            <boxGeometry args={[0.3, 1.5, 0.3]} />
             <meshBasicMaterial color="#FFD700" />
           </mesh>
         );
@@ -159,6 +169,13 @@ const Environment = () => {
       <Tree position={[16, -0.6, -7]} scale={0.9} />
       <Tree position={[-8, -0.6, 3]} scale={1.0} />
       <Tree position={[9, -0.6, 2]} scale={0.8} />
+      {/* Extra trees */}
+      <Tree position={[-17, -0.6, -3]} scale={0.85} />
+      <Tree position={[17, -0.6, -3]} scale={0.95} />
+      <Tree position={[-18, -0.6, -16]} scale={1.0} />
+      <Tree position={[18, -0.6, -16]} scale={0.9} />
+      <Tree position={[-10, -0.6, 4]} scale={0.75} />
+      <Tree position={[11, -0.6, 3]} scale={0.9} />
 
       {/* Round deciduous trees */}
       <RoundTree position={[-12, -0.6, -2]} scale={0.9} />
@@ -171,6 +188,11 @@ const Environment = () => {
       <RoundTree position={[17, -0.6, -9]} scale={0.85} />
       <RoundTree position={[6, -0.6, 3]} scale={0.7} />
       <RoundTree position={[-6, -0.6, 4]} scale={0.9} />
+      {/* Extra round trees */}
+      <RoundTree position={[-19, -0.6, -5]} scale={0.75} />
+      <RoundTree position={[19, -0.6, -6]} scale={0.8} />
+      <RoundTree position={[-15, -0.6, -19]} scale={0.9} />
+      <RoundTree position={[15, -0.6, -19]} scale={1.0} />
 
       {/* Rocks near pond edge */}
       <Rock position={[-6, -0.5, -1]} scale={0.8} color="#777" />
@@ -190,12 +212,21 @@ const Environment = () => {
       <Flower position={[-9, -0.55, 2]} color="#FFD700" />
       <Flower position={[10, -0.55, 1]} color="#FF6347" />
 
-      {/* Mushrooms */}
+      {/* Mushrooms - many more */}
       <Mushroom position={[-13, -0.55, -5]} />
       <Mushroom position={[13, -0.55, -12]} />
       <Mushroom position={[-15, -0.55, -10]} />
+      <Mushroom position={[14, -0.55, -4]} scale={0.8} />
+      <Mushroom position={[-11, -0.55, -1]} scale={1.2} />
+      <Mushroom position={[10, -0.55, 0]} scale={0.9} />
+      <Mushroom position={[-16, -0.55, -14]} scale={1.1} />
+      <Mushroom position={[16, -0.55, -15]} scale={0.7} />
+      <Mushroom position={[-7, -0.55, 3]} scale={0.85} />
+      <Mushroom position={[8, -0.55, 2]} scale={0.95} />
+      <Mushroom position={[-14, -0.55, -18]} scale={0.8} />
+      <Mushroom position={[12, -0.55, -19]} scale={1.0} />
 
-      {/* Grass patches - many more */}
+      {/* Grass patches */}
       <GrassPatch position={[-3, -0.58, 1]} />
       <GrassPatch position={[2, -0.58, 0]} />
       <GrassPatch position={[-7, -0.58, -1]} />
@@ -209,7 +240,7 @@ const Environment = () => {
       <GrassPatch position={[0, -0.58, 2]} />
       <GrassPatch position={[-5, -0.58, 3]} />
 
-      {/* Additional grass clumps spread around */}
+      {/* Grass clumps */}
       <GrassClump position={[-2, -0.58, 2]} />
       <GrassClump position={[3, -0.58, 1.5]} />
       <GrassClump position={[-8, -0.58, 1]} />
