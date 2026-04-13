@@ -9,7 +9,7 @@ import Slingshot from './Slingshot';
 import Projectile from './Projectile';
 import Ripple from './Ripple';
 import Environment from './Environment';
-import { playSplash, playShoot, playFrogJump, playFrogUp } from './SoundEffects';
+import { plasSplash, playShoot, playFrogJump } from './SoundEffects';
 
 const STONE_COLORS = ['#e53935', '#fdd835', '#1e88e5', '#43a047'];
 const LILY_PAD_POSITIONS: [number, number, number][] = [
@@ -22,9 +22,6 @@ const LILY_PAD_POSITIONS: [number, number, number][] = [
   [3, -0.45, -12],
 ];
 
-// Pond center is at (0, -0.5, -8), radius 12
-const POND_CENTER = new THREE.Vector3(0, 0, -8);
-const POND_RADIUS = 12;
 
 interface FrogData {
   id: string;
