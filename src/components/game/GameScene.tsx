@@ -338,7 +338,7 @@ const GameScene = () => {
 
   return (
     <div
-      style={{ width: '100vw', height: '100vh', cursor: 'crosshair' }}
+      style={{ width: '100vw', height: '100vh', cursor: 'crosshair', touchAction: 'none' }}
       onPointerDown={handleInteraction}
     >
       <Canvas
