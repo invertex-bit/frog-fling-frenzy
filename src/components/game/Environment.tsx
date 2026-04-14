@@ -129,7 +129,7 @@ const Sun = () => {
   });
 
   return (
-    <group ref={ref} position={[-12, 22, -25]}>
+    <group ref={ref} position={[0, 20, -30]}>
       <mesh>
         <sphereGeometry args={[3, 16, 12]} />
         <meshBasicMaterial color="#FFD700" />
@@ -156,43 +156,72 @@ const Environment = () => {
     <group>
       <Sun />
 
-      {/* Conifer trees on dry land */}
-      <Tree position={[-14, -0.6, -4]} scale={1.2} />
-      <Tree position={[-15, -0.6, -8]} scale={0.9} />
-      <Tree position={[-14, -0.6, -14]} scale={1.1} />
+      {/* Trees along the horizon - left side */}
+      <Tree position={[-18, -0.6, -22]} scale={1.2} />
+      <Tree position={[-15, -0.6, -23]} scale={0.9} />
+      <Tree position={[-12, -0.6, -22]} scale={1.1} />
+      <Tree position={[-9, -0.6, -23]} scale={1.0} />
+      <Tree position={[-6, -0.6, -22]} scale={0.85} />
+      
+      {/* Trees along the horizon - center */}
+      <Tree position={[-3, -0.6, -23]} scale={1.0} />
+      <Tree position={[0, -0.6, -22]} scale={1.15} />
+      <Tree position={[3, -0.6, -23]} scale={0.9} />
+      <Tree position={[6, -0.6, -22]} scale={1.0} />
+      
+      {/* Trees along the horizon - right side */}
+      <Tree position={[9, -0.6, -23]} scale={1.1} />
+      <Tree position={[12, -0.6, -22]} scale={0.8} />
+      <Tree position={[15, -0.6, -23]} scale={1.0} />
+      <Tree position={[18, -0.6, -22]} scale={1.3} />
+
+      {/* Round trees along horizon */}
+      <RoundTree position={[-16.5, -0.6, -21]} scale={0.9} />
+      <RoundTree position={[-13.5, -0.6, -24]} scale={1.1} />
+      <RoundTree position={[-10.5, -0.6, -21]} scale={0.8} />
+      <RoundTree position={[-7.5, -0.6, -24]} scale={1.0} />
+      <RoundTree position={[-4.5, -0.6, -21]} scale={0.9} />
+      <RoundTree position={[-1.5, -0.6, -24]} scale={1.2} />
+      <RoundTree position={[1.5, -0.6, -21]} scale={0.7} />
+      <RoundTree position={[4.5, -0.6, -24]} scale={1.0} />
+      <RoundTree position={[7.5, -0.6, -21]} scale={0.85} />
+      <RoundTree position={[10.5, -0.6, -24]} scale={1.1} />
+      <RoundTree position={[13.5, -0.6, -21]} scale={0.75} />
+      <RoundTree position={[16.5, -0.6, -24]} scale={0.9} />
+
+      {/* Trees on sides closer to camera */}
+      <Tree position={[-14, -0.6, -4]} scale={1.0} />
+      <Tree position={[-12, -0.6, -8]} scale={0.9} />
       <Tree position={[14, -0.6, -5]} scale={1.0} />
-      <Tree position={[15, -0.6, -10]} scale={1.3} />
-      <Tree position={[14, -0.6, -15]} scale={0.8} />
-      <Tree position={[-13, -0.6, -18]} scale={1.0} />
-      <Tree position={[13, -0.6, -18]} scale={1.1} />
-      <Tree position={[-16, -0.6, -12]} scale={0.7} />
-      <Tree position={[16, -0.6, -7]} scale={0.9} />
+      <Tree position={[12, -0.6, -9]} scale={0.8} />
       <Tree position={[-8, -0.6, 3]} scale={1.0} />
       <Tree position={[9, -0.6, 2]} scale={0.8} />
-      {/* Extra trees */}
-      <Tree position={[-17, -0.6, -3]} scale={0.85} />
-      <Tree position={[17, -0.6, -3]} scale={0.95} />
-      <Tree position={[-18, -0.6, -16]} scale={1.0} />
-      <Tree position={[18, -0.6, -16]} scale={0.9} />
-      <Tree position={[-10, -0.6, 4]} scale={0.75} />
-      <Tree position={[11, -0.6, 3]} scale={0.9} />
-
-      {/* Round deciduous trees */}
       <RoundTree position={[-12, -0.6, -2]} scale={0.9} />
       <RoundTree position={[12, -0.6, -3]} scale={1.1} />
-      <RoundTree position={[-16, -0.6, -6]} scale={0.8} />
-      <RoundTree position={[16, -0.6, -13]} scale={1.0} />
-      <RoundTree position={[-11, -0.6, -16]} scale={1.2} />
-      <RoundTree position={[11, -0.6, -17]} scale={0.7} />
-      <RoundTree position={[-17, -0.6, -10]} scale={1.0} />
-      <RoundTree position={[17, -0.6, -9]} scale={0.85} />
       <RoundTree position={[6, -0.6, 3]} scale={0.7} />
       <RoundTree position={[-6, -0.6, 4]} scale={0.9} />
-      {/* Extra round trees */}
-      <RoundTree position={[-19, -0.6, -5]} scale={0.75} />
-      <RoundTree position={[19, -0.6, -6]} scale={0.8} />
-      <RoundTree position={[-15, -0.6, -19]} scale={0.9} />
-      <RoundTree position={[15, -0.6, -19]} scale={1.0} />
+
+      {/* Mushrooms along the horizon on grass */}
+      <Mushroom position={[-17, -0.55, -21]} scale={1.2} />
+      <Mushroom position={[-14, -0.55, -22]} scale={0.9} />
+      <Mushroom position={[-11, -0.55, -21.5]} scale={1.0} />
+      <Mushroom position={[-8, -0.55, -22.5]} scale={0.8} />
+      <Mushroom position={[-5, -0.55, -21]} scale={1.1} />
+      <Mushroom position={[-2, -0.55, -22]} scale={0.9} />
+      <Mushroom position={[1, -0.55, -21.5]} scale={1.0} />
+      <Mushroom position={[4, -0.55, -22]} scale={0.85} />
+      <Mushroom position={[7, -0.55, -21]} scale={1.2} />
+      <Mushroom position={[10, -0.55, -22.5]} scale={0.8} />
+      <Mushroom position={[13, -0.55, -21]} scale={1.0} />
+      <Mushroom position={[16, -0.55, -22]} scale={0.9} />
+
+      {/* Mushrooms on sides */}
+      <Mushroom position={[-13, -0.55, -5]} />
+      <Mushroom position={[13, -0.55, -6]} />
+      <Mushroom position={[-11, -0.55, -1]} scale={1.2} />
+      <Mushroom position={[10, -0.55, 0]} scale={0.9} />
+      <Mushroom position={[-7, -0.55, 3]} scale={0.85} />
+      <Mushroom position={[8, -0.55, 2]} scale={0.95} />
 
       {/* Rocks near pond edge */}
       <Rock position={[-6, -0.5, -1]} scale={0.8} color="#777" />
@@ -200,43 +229,14 @@ const Environment = () => {
       <Rock position={[-8, -0.5, -18]} scale={0.6} color="#888" />
       <Rock position={[8, -0.5, -18]} scale={0.9} color="#777" />
       <Rock position={[4, -0.5, 0]} scale={0.5} color="#999" />
-      <Rock position={[-4, -0.5, -19]} scale={0.7} color="#666" />
 
       {/* Flowers */}
       <Flower position={[-5, -0.55, 1]} color="#FF69B4" />
       <Flower position={[5, -0.55, 0]} color="#FFD700" />
       <Flower position={[-12, -0.55, -6]} color="#FF6347" />
       <Flower position={[13, -0.55, -8]} color="#DDA0DD" />
-      <Flower position={[-12, -0.55, -16]} color="#87CEEB" />
-      <Flower position={[12, -0.55, -17]} color="#FF69B4" />
       <Flower position={[-9, -0.55, 2]} color="#FFD700" />
       <Flower position={[10, -0.55, 1]} color="#FF6347" />
-
-      {/* Trees and mushrooms above water (center top) */}
-      <Tree position={[-2, -0.6, -17]} scale={0.9} />
-      <Tree position={[2, -0.6, -18]} scale={1.0} />
-      <RoundTree position={[0, -0.6, -16]} scale={0.8} />
-      <RoundTree position={[-3.5, -0.6, -18]} scale={1.0} />
-      <RoundTree position={[4, -0.6, -17]} scale={0.9} />
-      <Tree position={[1, -0.6, -19]} scale={0.7} />
-      <Mushroom position={[-1, -0.55, -16]} scale={1.2} />
-      <Mushroom position={[1.5, -0.55, -17]} scale={0.9} />
-      <Mushroom position={[3, -0.55, -16.5]} scale={1.0} />
-      <Mushroom position={[-3, -0.55, -17.5]} scale={0.8} />
-
-      {/* Mushrooms scattered */}
-      <Mushroom position={[-13, -0.55, -5]} />
-      <Mushroom position={[13, -0.55, -12]} />
-      <Mushroom position={[-15, -0.55, -10]} />
-      <Mushroom position={[14, -0.55, -4]} scale={0.8} />
-      <Mushroom position={[-11, -0.55, -1]} scale={1.2} />
-      <Mushroom position={[10, -0.55, 0]} scale={0.9} />
-      <Mushroom position={[-16, -0.55, -14]} scale={1.1} />
-      <Mushroom position={[16, -0.55, -15]} scale={0.7} />
-      <Mushroom position={[-7, -0.55, 3]} scale={0.85} />
-      <Mushroom position={[8, -0.55, 2]} scale={0.95} />
-      <Mushroom position={[-14, -0.55, -18]} scale={0.8} />
-      <Mushroom position={[12, -0.55, -19]} scale={1.0} />
 
       {/* Grass patches */}
       <GrassPatch position={[-3, -0.58, 1]} />

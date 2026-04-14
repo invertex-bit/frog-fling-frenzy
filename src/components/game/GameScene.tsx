@@ -71,6 +71,7 @@ const InputHandler = ({
     const canvas = gl.domElement;
 
     const onPointerDown = (e: PointerEvent) => {
+      e.preventDefault();
       isDragging.current = true;
       startPoint.current.set(e.clientX, e.clientY);
       setIsPulling(true);
@@ -79,6 +80,7 @@ const InputHandler = ({
 
     const onPointerMove = (e: PointerEvent) => {
       if (!isDragging.current) return;
+      e.preventDefault();
       const dx = (e.clientX - startPoint.current.x) / window.innerWidth;
       const dy = (e.clientY - startPoint.current.y) / window.innerHeight;
       // Drag down = pull back toward player (positive z), rubber stretches toward camera
