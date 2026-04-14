@@ -30,6 +30,7 @@ interface FrogData {
   visible: boolean;
   respawnTimer: number | null;
   isSpawning: boolean;
+  dodgeTarget: [number, number, number] | null; // target position for dodge jump
 }
 
 interface ProjectileData {
@@ -214,6 +215,7 @@ const GameWorld = () => {
       visible: true,
       respawnTimer: null,
       isSpawning: false,
+      dodgeTarget: null,
     }))
   );
 
