@@ -142,6 +142,7 @@ const FrogManager = ({
             onDodge={onDodge}
             shouldDodge={frog.shouldDodge}
             isSpawning={frog.isSpawning}
+            dodgeTarget={frog.dodgeTarget}
           />
         ))}
     </>
