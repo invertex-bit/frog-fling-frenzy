@@ -56,15 +56,15 @@ export const playCroak = (volume = 0.4) => {
   playAudio(`${AUDIO_BASE}/frogkva.mp3`, volume);
 };
 
-export const playSplash = (volume = 0.25) => {
+export const playSplash = (volume = 0.2) => {
   playAudio(`${AUDIO_BASE}/stodown.mp3`, volume);
 };
 
-export const playFrogDown = (volume = 0.25) => {
+export const playFrogDown = (volume = 0.2) => {
   playAudio(`${AUDIO_BASE}/frogdown.mp3`, volume);
 };
 
-export const playFrogUp = (volume = 0.25) => {
+export const playFrogUp = (volume = 0.2) => {
   playAudio(`${AUDIO_BASE}/frogup.mp3`, volume);
 };
 
@@ -79,7 +79,7 @@ export const playFrogJump = (volume = 0.2) => {
 // Background music
 export const startBackgroundMusic = () => {
   const ctx = getAudioContext();
-  const url = `${AUDIO_BASE}/Ripples_in_the_Glass.mp3`;
+  const url = `${AUDIO_BASE}/ambi.mp3`;
   loadAudio(url).then((buffer) => {
     if (bgMusicSource) {
       try { bgMusicSource.stop(); } catch {}

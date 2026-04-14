@@ -1,4 +1,4 @@
-import { useRef, useState, useEffect, useCallback } from 'react';
+import { useRef, useState, useEffect, useCallback, useMemo } from 'react';
 import { useFrame } from '@react-three/fiber';
 import * as THREE from 'three';
 import { playCroak, playFrogDown, playFrogUp } from './SoundEffects';
@@ -11,15 +11,29 @@ interface FrogProps {
   onDodge: (id: string) => void;
   shouldDodge: boolean;
   isSpawning?: boolean;
+  dodgeTarget?: [number, number, number] | null;
 }
 
-const Frog = ({ position, id, onDodge, shouldDodge, isSpawning = false }: FrogProps) => {
+const Frog = ({ position, id, onDodge, shouldDodge, isSpawning = false, dodgeTarget = null }: FrogProps) => {
   const ref = useRef<THREE.Group>(null);
   const [state, setState] = useState<FrogState>(isSpawning ? 'spawning' : 'idle');
   const progress = useRef(0);
   const idleOffset = useRef(Math.random() * Math.PI * 2);
   const startPos = useRef(new THREE.Vector3(...position));
   const hasCroaked = useRef(false);
+
+  // Compute dodge direction vector
+  const dodgeDir = useMemo(() => {
+    if (dodgeTarget) {
+      const dx = dodgeTarget[0] - position[0];
+      const dz = dodgeTarget[2] - position[2];
+      const len = Math.sqrt(dx * dx + dz * dz);
+      return { x: dx / len, z: dz / len, dist: len, toWater: false };
+    }
+    // Random direction into water
+    const angle = Math.random() * Math.PI * 2;
+    return { x: Math.cos(angle), z: Math.sin(angle), dist: 1.5, toWater: true };
+  }, [dodgeTarget, position]);
 
   useEffect(() => {
     startPos.current.set(...position);
@@ -57,35 +71,60 @@ const Frog = ({ position, id, onDodge, shouldDodge, isSpawning = false }: FrogPr
       progress.current += delta * 1.8;
       const t = Math.min(progress.current, 1);
 
-      let yOffset = 0;
-      let zOffset = 0;
-      let rotX = 0;
+      const moveX = dodgeDir.x;
+      const moveZ = dodgeDir.z;
+      const jumpToNeighbor = !dodgeDir.toWater;
+
+      // Face jump direction
+      const faceAngle = Math.atan2(moveX, moveZ);
 
       if (t < 0.15) {
-        // Crouch down
         const crouchT = t / 0.15;
-        yOffset = -crouchT * 0.1;
+        const yOffset = -crouchT * 0.1;
+        ref.current.position.set(startPos.current.x, startPos.current.y + yOffset, startPos.current.z);
         ref.current.scale.set(1 + crouchT * 0.1, 1 - crouchT * 0.15, 1 + crouchT * 0.1);
+        ref.current.rotation.y = faceAngle;
       } else if (t < 0.5) {
-        // Jump up and forward
         const jumpT = (t - 0.15) / 0.35;
-        yOffset = jumpT * 2.2;
-        zOffset = jumpT * 0.8;
-        rotX = jumpT * -0.5;
+        const yOffset = jumpT * 2.2;
+        const hDist = jumpT * dodgeDir.dist * 0.6;
+        ref.current.position.set(
+          startPos.current.x + moveX * hDist,
+          startPos.current.y + yOffset,
+          startPos.current.z + moveZ * hDist
+        );
         const s = 1 + (1 - jumpT) * 0.1;
         ref.current.scale.set(1, s, 1);
+        ref.current.rotation.y = faceAngle;
+        ref.current.rotation.x = jumpT * -0.5;
       } else {
-        // Arc down into water with forward motion
         const sinkT = (t - 0.5) / 0.5;
-        yOffset = 2.2 * (1 - sinkT * sinkT) - sinkT * sinkT * 1.5;
-        zOffset = 0.8 + sinkT * 0.5;
-        rotX = -0.5 + sinkT * 1.8; // tilt forward as diving
-        ref.current.scale.setScalar(1 - sinkT * 0.4);
-      }
+        const hDist = (0.6 + sinkT * 0.4) * dodgeDir.dist;
 
-      ref.current.position.y = startPos.current.y + yOffset;
-      ref.current.position.z = startPos.current.z + zOffset;
-      ref.current.rotation.x = rotX;
+        if (jumpToNeighbor) {
+          // Arc to neighbor pad and land
+          const yOffset = 2.2 * (1 - sinkT * sinkT);
+          const bounce = sinkT > 0.8 ? Math.sin((sinkT - 0.8) / 0.2 * Math.PI) * 0.1 : 0;
+          ref.current.position.set(
+            startPos.current.x + moveX * hDist,
+            startPos.current.y + yOffset + bounce,
+            startPos.current.z + moveZ * hDist
+          );
+          ref.current.scale.setScalar(1);
+          ref.current.rotation.x = -0.5 * (1 - sinkT);
+        } else {
+          // Dive into water
+          const yOffset = 2.2 * (1 - sinkT * sinkT) - sinkT * sinkT * 1.5;
+          ref.current.position.set(
+            startPos.current.x + moveX * hDist,
+            startPos.current.y + yOffset,
+            startPos.current.z + moveZ * hDist
+          );
+          ref.current.scale.setScalar(1 - sinkT * 0.4);
+          ref.current.rotation.x = -0.5 + sinkT * 1.8;
+        }
+        ref.current.rotation.y = faceAngle;
+      }
 
       if (t >= 1) {
         setState('gone');

@@ -30,6 +30,7 @@ interface FrogData {
   visible: boolean;
   respawnTimer: number | null;
   isSpawning: boolean;
+  dodgeTarget: [number, number, number] | null; // target position for dodge jump
 }
 
 interface ProjectileData {
@@ -95,12 +96,12 @@ const InputHandler = ({
 
       const pb = pullBackRef.current;
       const power = pb.length() * 15;
-      if (power > 0.5) {
+      if (power > 0.3) {
         // Shoot forward (opposite to pull): negative Z, upward arc
         const vel = new THREE.Vector3(
           -pb.x * 8,
-          Math.abs(pb.y) * 10 + 3,
-          -Math.abs(pb.z) * 8 - 5
+          Math.abs(pb.y) * 10 + 2,
+          -Math.abs(pb.z) * 8 - 3
         );
         playShoot(pb.length());
         onShoot(vel);
@@ -141,6 +142,7 @@ const FrogManager = ({
             onDodge={onDodge}
             shouldDodge={frog.shouldDodge}
             isSpawning={frog.isSpawning}
+            dodgeTarget={frog.dodgeTarget}
           />
         ))}
     </>
@@ -214,6 +216,7 @@ const GameWorld = () => {
       visible: true,
       respawnTimer: null,
       isSpawning: false,
+      dodgeTarget: null,
     }))
   );
 
@@ -229,17 +232,36 @@ const GameWorld = () => {
 
   const handleFrogDodge = useCallback(
     (id: string) => {
-      setFrogs((prev) =>
-        prev.map((f) => {
-          if (f.id === id) {
-            const pos = LILY_PAD_POSITIONS[f.padIndex];
-            addRipple(new THREE.Vector3(pos[0], pos[1], pos[2]));
-            playFrogJump();
-            return { ...f, visible: false, shouldDodge: false, isSpawning: false, respawnTimer: 3 + Math.random() * 2 };
+      setFrogs((prev) => {
+        const frog = prev.find((f) => f.id === id);
+        if (!frog) return prev;
+
+        const pos = LILY_PAD_POSITIONS[frog.padIndex];
+        addRipple(new THREE.Vector3(pos[0], pos[1], pos[2]));
+        playFrogJump();
+
+        // Check if frog has a dodge target (neighbor pad)
+        if (frog.dodgeTarget) {
+          const targetPadIndex = LILY_PAD_POSITIONS.findIndex(
+            (p) => Math.abs(p[0] - frog.dodgeTarget![0]) < 0.1 && Math.abs(p[2] - frog.dodgeTarget![2]) < 0.1
+          );
+          if (targetPadIndex >= 0) {
+            // Frog jumps to neighbor pad
+            return prev.map((f) =>
+              f.id === id
+                ? { ...f, padIndex: targetPadIndex, shouldDodge: false, isSpawning: false, dodgeTarget: null, id: `frog-${Date.now()}-${Math.random()}` }
+                : f
+            );
           }
-          return f;
-        })
-      );
+        }
+
+        // Frog jumps into water
+        return prev.map((f) =>
+          f.id === id
+            ? { ...f, visible: false, shouldDodge: false, isSpawning: false, respawnTimer: 3 + Math.random() * 2, dodgeTarget: null }
+            : f
+        );
+      });
     },
     [addRipple]
   );
@@ -252,7 +274,22 @@ const GameWorld = () => {
           const frogPos = LILY_PAD_POSITIONS[f.padIndex];
           const dist = projectilePos.distanceTo(new THREE.Vector3(frogPos[0], frogPos[1], frogPos[2]));
           if (dist < 2.5) {
-            return { ...f, shouldDodge: true };
+            // Find free neighbor pads (50% chance to jump to neighbor)
+            const usedPads = prev.filter((ff) => ff.visible && ff.id !== f.id).map((ff) => ff.padIndex);
+            const neighbors = LILY_PAD_POSITIONS
+              .map((p, i) => ({ pos: p, idx: i }))
+              .filter((p) => {
+                if (p.idx === f.padIndex || usedPads.includes(p.idx)) return false;
+                const dx = p.pos[0] - frogPos[0];
+                const dz = p.pos[2] - frogPos[2];
+                return Math.sqrt(dx * dx + dz * dz) < 5; // neighbor within 5 units
+              });
+
+            if (neighbors.length > 0 && Math.random() > 0.4) {
+              const target = neighbors[Math.floor(Math.random() * neighbors.length)];
+              return { ...f, shouldDodge: true, dodgeTarget: target.pos as [number, number, number] };
+            }
+            return { ...f, shouldDodge: true, dodgeTarget: null };
           }
           return f;
         })
