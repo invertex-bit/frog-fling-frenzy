@@ -95,12 +95,12 @@ const InputHandler = ({
 
       const pb = pullBackRef.current;
       const power = pb.length() * 15;
-      if (power > 0.5) {
+      if (power > 0.3) {
         // Shoot forward (opposite to pull): negative Z, upward arc
         const vel = new THREE.Vector3(
           -pb.x * 8,
-          Math.abs(pb.y) * 10 + 3,
-          -Math.abs(pb.z) * 8 - 5
+          Math.abs(pb.y) * 10 + 2,
+          -Math.abs(pb.z) * 8 - 3
         );
         playShoot(pb.length());
         onShoot(vel);
