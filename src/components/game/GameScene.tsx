@@ -167,7 +167,14 @@ const RespawnManager = ({
           const newTimer = f.respawnTimer - delta;
           if (newTimer <= 0) {
             const usedPads = prev.filter((ff) => ff.visible).map((ff) => ff.padIndex);
-            const available = pickRandomPads(1, usedPads);
+            // Also exclude pads that dodging frogs are jumping to
+            const pendingTargetPads = prev
+              .filter((ff) => ff.shouldDodge && ff.dodgeTarget)
+              .map((ff) => LILY_PAD_POSITIONS.findIndex(
+                (p) => Math.abs(p[0] - ff.dodgeTarget![0]) < 0.1 && Math.abs(p[2] - ff.dodgeTarget![2]) < 0.1
+              ))
+              .filter((i) => i >= 0);
+            const available = pickRandomPads(1, [...usedPads, ...pendingTargetPads]);
             if (available.length > 0) {
               const padPos = LILY_PAD_POSITIONS[available[0]];
               addRipple(new THREE.Vector3(padPos[0], padPos[1], padPos[2]));
