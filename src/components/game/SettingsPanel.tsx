@@ -78,8 +78,25 @@ const SettingsPanel = () => {
               setMusic(v);
               setMusicVolume(v);
             }}
-            style={{ width: '100%' }}
+            style={{ width: '100%', marginBottom: 16 }}
           />
+
+          <button
+            onClick={() => window.dispatchEvent(new Event('reset-shot-count'))}
+            style={{
+              width: '100%',
+              padding: '8px',
+              background: '#e53935',
+              color: 'white',
+              border: 'none',
+              borderRadius: 6,
+              cursor: 'pointer',
+              fontSize: 13,
+              fontWeight: 'bold',
+            }}
+          >
+            Сбросить счётчик снарядов
+          </button>
         </div>
       )}
     </>

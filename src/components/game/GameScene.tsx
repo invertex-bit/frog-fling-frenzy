@@ -397,8 +397,10 @@ const GameScene = () => {
     setShotCount((prev) => prev + 1);
   }, []);
 
-  const resetShotCount = useCallback(() => {
-    setShotCount(0);
+  useEffect(() => {
+    const handler = () => setShotCount(0);
+    window.addEventListener('reset-shot-count', handler);
+    return () => window.removeEventListener('reset-shot-count', handler);
   }, []);
 
   return (
@@ -433,8 +435,4 @@ const GameScene = () => {
   );
 };
 
-export { GameScene };
-export const useShotCounter = () => {
-  // This is handled via props now
-};
 export default GameScene;
