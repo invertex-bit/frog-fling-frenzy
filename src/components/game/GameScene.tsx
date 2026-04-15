@@ -199,7 +199,7 @@ const Ground = () => (
   </mesh>
 );
 
-const GameWorld = () => {
+const GameWorld = ({ onShot }: { onShot: () => void }) => {
   const [projectiles, setProjectiles] = useState<ProjectileData[]>([]);
   const [ripples, setRipples] = useState<RippleData[]>([]);
   const [pullBack, setPullBack] = useState(new THREE.Vector3(0, 0, 0));
@@ -247,7 +247,9 @@ const GameWorld = () => {
           const targetPadIndex = LILY_PAD_POSITIONS.findIndex(
             (p) => Math.abs(p[0] - frog.dodgeTarget![0]) < 0.1 && Math.abs(p[2] - frog.dodgeTarget![2]) < 0.1
           );
-          if (targetPadIndex >= 0) {
+          // Verify target pad is still free
+          const occupiedPads = prev.filter((ff) => ff.visible && ff.id !== id).map((ff) => ff.padIndex);
+          if (targetPadIndex >= 0 && !occupiedPads.includes(targetPadIndex)) {
             // Frog jumps to neighbor pad
             return prev.map((f) =>
               f.id === id
@@ -276,15 +278,22 @@ const GameWorld = () => {
           const frogPos = LILY_PAD_POSITIONS[f.padIndex];
           const dist = projectilePos.distanceTo(new THREE.Vector3(frogPos[0], frogPos[1], frogPos[2]));
           if (dist < 2.5) {
-            // Find free neighbor pads (50% chance to jump to neighbor)
+            // Find free neighbor pads - also exclude pads that are dodge targets of other frogs
             const usedPads = prev.filter((ff) => ff.visible && ff.id !== f.id).map((ff) => ff.padIndex);
+            const pendingTargetPads = prev
+              .filter((ff) => ff.shouldDodge && ff.dodgeTarget)
+              .map((ff) => LILY_PAD_POSITIONS.findIndex(
+                (p) => Math.abs(p[0] - ff.dodgeTarget![0]) < 0.1 && Math.abs(p[2] - ff.dodgeTarget![2]) < 0.1
+              ))
+              .filter((i) => i >= 0);
+            const allOccupied = [...usedPads, ...pendingTargetPads];
             const neighbors = LILY_PAD_POSITIONS
               .map((p, i) => ({ pos: p, idx: i }))
               .filter((p) => {
-                if (p.idx === f.padIndex || usedPads.includes(p.idx)) return false;
+                if (p.idx === f.padIndex || allOccupied.includes(p.idx)) return false;
                 const dx = p.pos[0] - frogPos[0];
                 const dz = p.pos[2] - frogPos[2];
-                return Math.sqrt(dx * dx + dz * dz) < 5; // neighbor within 5 units
+                return Math.sqrt(dx * dx + dz * dz) < 5;
               });
 
             if (neighbors.length > 0 && Math.random() > 0.4) {
@@ -306,8 +315,9 @@ const GameWorld = () => {
       const startPosition = new THREE.Vector3(0, 0.15, 2.8);
       setProjectiles((prev) => [...prev, { id, startPosition, velocity, color: currentColor }]);
       setCurrentColor(getRandomColor());
+      onShot();
     },
-    [currentColor]
+    [currentColor, onShot]
   );
 
   const removeProjectile = useCallback((id: string) => {
@@ -367,6 +377,7 @@ const GameWorld = () => {
 
 const GameScene = () => {
   const musicStarted = useRef(false);
+  const [shotCount, setShotCount] = useState(0);
 
   const handleInteraction = useCallback(() => {
     if (!musicStarted.current) {
@@ -375,17 +386,37 @@ const GameScene = () => {
     }
   }, []);
 
+  const handleShot = useCallback(() => {
+    setShotCount((prev) => prev + 1);
+  }, []);
+
   return (
     <div
-      style={{ width: '100vw', height: '100vh', cursor: 'crosshair', touchAction: 'none' }}
+      style={{ width: '100vw', height: '100vh', cursor: 'crosshair', touchAction: 'none', position: 'relative' }}
       onPointerDown={handleInteraction}
     >
+      <div style={{
+        position: 'absolute',
+        top: '16px',
+        left: '16px',
+        zIndex: 10,
+        background: 'rgba(0,0,0,0.5)',
+        color: 'white',
+        padding: '8px 16px',
+        borderRadius: '8px',
+        fontSize: '18px',
+        fontWeight: 'bold',
+        pointerEvents: 'none',
+        fontFamily: 'sans-serif',
+      }}>
+        🪨 {shotCount}
+      </div>
       <Canvas
         camera={{ position: [0, 1, 4], fov: 60, near: 0.1, far: 100 }}
         gl={{ antialias: true }}
         dpr={[1, 2]}
       >
-        <GameWorld />
+        <GameWorld onShot={handleShot} />
       </Canvas>
     </div>
   );
