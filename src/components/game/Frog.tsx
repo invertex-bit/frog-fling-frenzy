@@ -46,7 +46,7 @@ const Frog = ({ position, id, onDodge, shouldDodge, isSpawning = false, dodgeTar
       if (ref.current) {
         const moveX = dodgeDir.x;
         const moveZ = dodgeDir.z;
-        const faceAngle = Math.atan2(moveX, moveZ);
+        const faceAngle = Math.atan2(moveX, moveZ) + Math.PI;
         ref.current.rotation.y = faceAngle;
       }
       // Start jump after 0.5s delay (croak plays first)
@@ -85,8 +85,8 @@ const Frog = ({ position, id, onDodge, shouldDodge, isSpawning = false, dodgeTar
       const moveZ = dodgeDir.z;
       const jumpToNeighbor = !dodgeDir.toWater;
 
-      // Face jump direction
-      const faceAngle = Math.atan2(moveX, moveZ);
+      // Face jump direction (add PI because model faces -Z by default)
+      const faceAngle = Math.atan2(moveX, moveZ) + Math.PI;
 
       if (t < 0.15) {
         const crouchT = t / 0.15;

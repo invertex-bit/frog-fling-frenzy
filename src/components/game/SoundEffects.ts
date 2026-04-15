@@ -61,11 +61,11 @@ export const playSplash = (volume = 0.2) => {
 };
 
 export const playFrogDown = (volume = 0.2) => {
-  playAudio(`${AUDIO_BASE}/frogdown1.mp3`, volume);
+  playAudio(`${AUDIO_BASE}/frogwaterdown.mp3`, volume);
 };
 
 export const playFrogUp = (volume = 0.2) => {
-  playAudio(`${AUDIO_BASE}/frogup1.mp3`, volume);
+  playAudio(`${AUDIO_BASE}/frogwaterup.mp3`, volume);
 };
 
 export const playShoot = (_power = 1, volume = 0.5) => {

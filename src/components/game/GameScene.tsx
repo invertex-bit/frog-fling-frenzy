@@ -246,8 +246,6 @@ const GameWorld = ({ onShot }: { onShot: () => void }) => {
         if (!frog) return prev;
 
         const pos = LILY_PAD_POSITIONS[frog.padIndex];
-        addRipple(new THREE.Vector3(pos[0], pos[1], pos[2]));
-        playFrogJump();
 
         // Check if frog has a dodge target (neighbor pad)
         if (frog.dodgeTarget) {
@@ -257,7 +255,7 @@ const GameWorld = ({ onShot }: { onShot: () => void }) => {
           // Verify target pad is still free
           const occupiedPads = prev.filter((ff) => ff.visible && ff.id !== id).map((ff) => ff.padIndex);
           if (targetPadIndex >= 0 && !occupiedPads.includes(targetPadIndex)) {
-            // Frog jumps to neighbor pad
+            // Frog jumps to neighbor pad — no water splash sound
             return prev.map((f) =>
               f.id === id
                 ? { ...f, padIndex: targetPadIndex, shouldDodge: false, isSpawning: false, dodgeTarget: null, id: `frog-${Date.now()}-${Math.random()}` }
@@ -266,7 +264,9 @@ const GameWorld = ({ onShot }: { onShot: () => void }) => {
           }
         }
 
-        // Frog jumps into water
+        // Frog jumps into water — play splash and ripple
+        addRipple(new THREE.Vector3(pos[0], pos[1], pos[2]));
+        playFrogJump();
         return prev.map((f) =>
           f.id === id
             ? { ...f, visible: false, shouldDodge: false, isSpawning: false, respawnTimer: 3 + Math.random() * 2, dodgeTarget: null }
@@ -395,6 +395,12 @@ const GameScene = () => {
 
   const handleShot = useCallback(() => {
     setShotCount((prev) => prev + 1);
+  }, []);
+
+  useEffect(() => {
+    const handler = () => setShotCount(0);
+    window.addEventListener('reset-shot-count', handler);
+    return () => window.removeEventListener('reset-shot-count', handler);
   }, []);
 
   return (
