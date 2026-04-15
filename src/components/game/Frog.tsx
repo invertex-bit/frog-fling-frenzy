@@ -42,12 +42,22 @@ const Frog = ({ position, id, onDodge, shouldDodge, isSpawning = false, dodgeTar
   const triggerDodge = useCallback(() => {
     if (state === 'idle') {
       playCroak();
-      setTimeout(() => playFrogDown(), 200);
-      setState('dodging');
-      progress.current = 0;
+      // Face jump direction immediately
+      if (ref.current) {
+        const moveX = dodgeDir.x;
+        const moveZ = dodgeDir.z;
+        const faceAngle = Math.atan2(moveX, moveZ);
+        ref.current.rotation.y = faceAngle;
+      }
+      // Start jump after 0.5s delay (croak plays first)
+      setTimeout(() => {
+        playFrogDown();
+        setState('dodging');
+        progress.current = 0;
+      }, 500);
       hasCroaked.current = true;
     }
-  }, [state]);
+  }, [state, dodgeDir]);
 
   useEffect(() => {
     if (shouldDodge && state === 'idle') {
