@@ -11,7 +11,7 @@ import Ripple from './Ripple';
 import Environment from './Environment';
 import { playSplash, playShoot, playFrogJump, startBackgroundMusic } from './SoundEffects';
 
-let shotCount = 0;
+
 
 const STONE_COLORS = ['#e53935', '#fdd835', '#1e88e5', '#43a047'];
 const LILY_PAD_POSITIONS: [number, number, number][] = [
