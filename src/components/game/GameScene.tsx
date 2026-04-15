@@ -397,6 +397,10 @@ const GameScene = () => {
     setShotCount((prev) => prev + 1);
   }, []);
 
+  const resetShotCount = useCallback(() => {
+    setShotCount(0);
+  }, []);
+
   return (
     <div
       style={{ width: '100vw', height: '100vh', cursor: 'crosshair', touchAction: 'none', position: 'relative' }}
@@ -429,4 +433,8 @@ const GameScene = () => {
   );
 };
 
+export { GameScene };
+export const useShotCounter = () => {
+  // This is handled via props now
+};
 export default GameScene;
