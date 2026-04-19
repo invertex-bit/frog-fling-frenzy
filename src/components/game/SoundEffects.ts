@@ -56,20 +56,20 @@ export const playCroak = (volume = 0.4) => {
   playAudio(`${AUDIO_BASE}/frogkva.mp3`, volume);
 };
 
-export const playSplash = (volume = 0.2) => {
-  playAudio(`${AUDIO_BASE}/stodown.mp3`, volume);
+export const playSplash = (_volume = 0.2) => {
+  // disabled
 };
 
-export const playFrogDown = (volume = 0.2) => {
-  playAudio(`${AUDIO_BASE}/frogwaterdown.mp3`, volume);
+export const playFrogDown = (_volume = 0.2) => {
+  // disabled
 };
 
-export const playFrogUp = (volume = 0.2) => {
-  playAudio(`${AUDIO_BASE}/frogwaterup.mp3`, volume);
+export const playFrogUp = (_volume = 0.2) => {
+  // disabled
 };
 
-export const playShoot = (_power = 1, volume = 0.5) => {
-  playAudio(`${AUDIO_BASE}/slingshot_fire.mp3`, volume);
+export const playShoot = (_power = 1, _volume = 0.5) => {
+  // disabled
 };
 
 export const playFrogJump = (volume = 0.2) => {
