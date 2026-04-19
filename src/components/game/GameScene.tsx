@@ -140,7 +140,7 @@ const FrogManager = ({
   onDodge,
 }: {
   frogs: FrogData[];
-  onDodge: (id: string) => void;
+  onDodge: (id: string, landing: [number, number, number] | null) => void;
 }) => {
   return (
     <>
