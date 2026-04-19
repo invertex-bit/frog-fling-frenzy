@@ -8,7 +8,7 @@ type FrogState = 'idle' | 'spawning' | 'dodging' | 'gone';
 interface FrogProps {
   position: [number, number, number];
   id: string;
-  onDodge: (id: string) => void;
+  onDodge: (id: string, landing: [number, number, number] | null) => void;
   shouldDodge: boolean;
   isSpawning?: boolean;
   dodgeTarget?: [number, number, number] | null;
