@@ -129,7 +129,7 @@ const Sun = () => {
   });
 
   return (
-    <group ref={ref} position={[-10, 5, -28]}>
+    <group ref={ref} position={[-5, 7, -28]}>
       <mesh>
         <sphereGeometry args={[2.4, 16, 12]} />
         <meshBasicMaterial color="#FFD700" />
