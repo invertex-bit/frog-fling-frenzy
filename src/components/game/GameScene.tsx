@@ -395,6 +395,7 @@ const GameWorld = ({ onShot }: { onShot: () => void }) => {
 const GameScene = () => {
   const musicStarted = useRef(false);
   const [shotCount, setShotCount] = useState(0);
+  const [showHint, setShowHint] = useState(true);
 
   const handleInteraction = useCallback(() => {
     if (!musicStarted.current) {
@@ -405,6 +406,7 @@ const GameScene = () => {
 
   const handleShot = useCallback(() => {
     setShotCount((prev) => prev + 1);
+    setShowHint(false);
   }, []);
 
   useEffect(() => {
@@ -434,6 +436,50 @@ const GameScene = () => {
       }}>
         🪨 {shotCount}
       </div>
+
+      {showHint && shotCount === 0 && (
+        <div
+          style={{
+            position: 'absolute',
+            bottom: '20%',
+            left: '50%',
+            transform: 'translateX(-50%)',
+            zIndex: 10,
+            display: 'flex',
+            flexDirection: 'column',
+            alignItems: 'center',
+            gap: '8px',
+            pointerEvents: 'none',
+            fontFamily: 'sans-serif',
+            color: 'white',
+            textShadow: '0 2px 8px rgba(0,0,0,0.8)',
+            animation: 'hintBounce 1.2s ease-in-out infinite',
+          }}
+        >
+          <div style={{
+            background: 'rgba(0,0,0,0.55)',
+            padding: '10px 18px',
+            borderRadius: '999px',
+            fontSize: '16px',
+            fontWeight: 600,
+            whiteSpace: 'nowrap',
+          }}>
+            Потяни вниз и отпусти 🎯
+          </div>
+          <svg width="44" height="56" viewBox="0 0 44 56" fill="none" xmlns="http://www.w3.org/2000/svg">
+            <path d="M22 4 V44 M22 44 L8 30 M22 44 L36 30" stroke="white" strokeWidth="5" strokeLinecap="round" strokeLinejoin="round" />
+            <path d="M22 4 V44 M22 44 L8 30 M22 44 L36 30" stroke="hsl(45, 100%, 55%)" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" />
+          </svg>
+        </div>
+      )}
+
+      <style>{`
+        @keyframes hintBounce {
+          0%, 100% { transform: translateX(-50%) translateY(0); opacity: 0.95; }
+          50% { transform: translateX(-50%) translateY(14px); opacity: 1; }
+        }
+      `}</style>
+
       <Canvas
         camera={{ position: [0, 1, 4], fov: 60, near: 0.1, far: 100 }}
         gl={{ antialias: true }}
