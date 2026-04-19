@@ -129,21 +129,21 @@ const Sun = () => {
   });
 
   return (
-    <group ref={ref} position={[0, 8, -28]}>
+    <group ref={ref} position={[-10, 5, -28]}>
       <mesh>
-        <sphereGeometry args={[4, 16, 12]} />
+        <sphereGeometry args={[2.4, 16, 12]} />
         <meshBasicMaterial color="#FFD700" />
       </mesh>
       <mesh>
-        <sphereGeometry args={[5, 16, 12]} />
+        <sphereGeometry args={[3, 16, 12]} />
         <meshBasicMaterial color="#FFF8DC" transparent opacity={0.3} />
       </mesh>
       <pointLight color="#FFD700" intensity={2} distance={80} />
       {Array.from({ length: 12 }).map((_, i) => {
         const angle = (i / 12) * Math.PI * 2;
         return (
-          <mesh key={i} position={[Math.cos(angle) * 6.5, Math.sin(angle) * 6.5, 0]} rotation={[0, 0, angle]}>
-            <boxGeometry args={[0.5, 2.5, 0.5]} />
+          <mesh key={i} position={[Math.cos(angle) * 4, Math.sin(angle) * 4, 0]} rotation={[0, 0, angle]}>
+            <boxGeometry args={[0.3, 1.5, 0.3]} />
             <meshBasicMaterial color="#FFD700" />
           </mesh>
         );
