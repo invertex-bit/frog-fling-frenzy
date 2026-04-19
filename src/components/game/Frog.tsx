@@ -49,12 +49,12 @@ const Frog = ({ position, id, onDodge, shouldDodge, isSpawning = false, dodgeTar
         const faceAngle = Math.atan2(moveX, moveZ) + Math.PI;
         ref.current.rotation.y = faceAngle;
       }
-      // Start jump after 0.5s delay (croak plays first)
+      // Start jump after 0.1s delay
       setTimeout(() => {
         playFrogDown();
         setState('dodging');
         progress.current = 0;
-      }, 500);
+      }, 100);
       hasCroaked.current = true;
     }
   }, [state, dodgeDir]);
