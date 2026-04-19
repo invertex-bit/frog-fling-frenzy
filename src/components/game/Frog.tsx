@@ -8,7 +8,7 @@ type FrogState = 'idle' | 'spawning' | 'dodging' | 'gone';
 interface FrogProps {
   position: [number, number, number];
   id: string;
-  onDodge: (id: string) => void;
+  onDodge: (id: string, landing: [number, number, number] | null) => void;
   shouldDodge: boolean;
   isSpawning?: boolean;
   dodgeTarget?: [number, number, number] | null;
@@ -139,7 +139,13 @@ const Frog = ({ position, id, onDodge, shouldDodge, isSpawning = false, dodgeTar
       if (t >= 1) {
         setState('gone');
         ref.current.visible = false;
-        onDodge(id);
+        const finalDist = dodgeDir.toWater ? dodgeDir.dist : dodgeDir.dist * 1.0;
+        const landing: [number, number, number] = [
+          startPos.current.x + moveX * finalDist,
+          startPos.current.y,
+          startPos.current.z + moveZ * finalDist,
+        ];
+        onDodge(id, dodgeDir.toWater ? landing : null);
       }
     } else if (state === 'spawning') {
       progress.current += delta * 1.5;

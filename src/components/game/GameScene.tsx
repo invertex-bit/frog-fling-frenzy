@@ -140,7 +140,7 @@ const FrogManager = ({
   onDodge,
 }: {
   frogs: FrogData[];
-  onDodge: (id: string) => void;
+  onDodge: (id: string, landing: [number, number, number] | null) => void;
 }) => {
   return (
     <>
@@ -250,7 +250,7 @@ const GameWorld = ({ onShot }: { onShot: () => void }) => {
   }, []);
 
   const handleFrogDodge = useCallback(
-    (id: string) => {
+    (id: string, landing: [number, number, number] | null) => {
       setFrogs((prev) => {
         const frog = prev.find((f) => f.id === id);
         if (!frog) return prev;
@@ -274,8 +274,9 @@ const GameWorld = ({ onShot }: { onShot: () => void }) => {
           }
         }
 
-        // Frog jumps into water — play splash and ripple
-        addRipple(new THREE.Vector3(pos[0], pos[1], pos[2]));
+        // Frog jumps into water — ripple at the actual landing point reported by the frog
+        const land = landing ?? pos;
+        addRipple(new THREE.Vector3(land[0], pos[1], land[2]));
         playFrogJump();
         return prev.map((f) =>
           f.id === id
