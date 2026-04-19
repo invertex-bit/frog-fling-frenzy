@@ -274,8 +274,13 @@ const GameWorld = ({ onShot }: { onShot: () => void }) => {
           }
         }
 
-        // Frog jumps into water — play splash and ripple
-        addRipple(new THREE.Vector3(pos[0], pos[1], pos[2]));
+        // Frog jumps into water — play splash and ripple at landing point
+        // Match the random dodge direction logic in Frog.tsx (no dodgeTarget => random angle, dist 1.5)
+        const angle = Math.random() * Math.PI * 2;
+        const dist = 1.5;
+        const landX = pos[0] + Math.cos(angle) * dist;
+        const landZ = pos[2] + Math.sin(angle) * dist;
+        addRipple(new THREE.Vector3(landX, pos[1], landZ));
         playFrogJump();
         return prev.map((f) =>
           f.id === id
