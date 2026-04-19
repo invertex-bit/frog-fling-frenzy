@@ -72,9 +72,11 @@ const InputHandler = ({
 
   useEffect(() => {
     const canvas = gl.domElement;
+    canvas.style.touchAction = 'none';
 
     const onPointerDown = (e: PointerEvent) => {
       e.preventDefault();
+      (e.target as Element)?.setPointerCapture?.(e.pointerId);
       isDragging.current = true;
       startPoint.current.set(e.clientX, e.clientY);
       setIsPulling(true);
@@ -111,14 +113,22 @@ const InputHandler = ({
       setPullBack(new THREE.Vector3(0, 0, 0));
     };
 
+    const preventTouch = (e: TouchEvent) => {
+      if (isDragging.current) e.preventDefault();
+    };
+
     canvas.addEventListener('pointerdown', onPointerDown);
     canvas.addEventListener('pointermove', onPointerMove);
     canvas.addEventListener('pointerup', onPointerUp);
+    canvas.addEventListener('pointercancel', onPointerUp);
+    document.addEventListener('touchmove', preventTouch, { passive: false });
 
     return () => {
       canvas.removeEventListener('pointerdown', onPointerDown);
       canvas.removeEventListener('pointermove', onPointerMove);
       canvas.removeEventListener('pointerup', onPointerUp);
+      canvas.removeEventListener('pointercancel', onPointerUp);
+      document.removeEventListener('touchmove', preventTouch);
     };
   }, [gl, pullBackRef, setPullBack, setIsPulling, onShoot]);
 
