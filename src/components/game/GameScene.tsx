@@ -250,7 +250,7 @@ const GameWorld = ({ onShot }: { onShot: () => void }) => {
   }, []);
 
   const handleFrogDodge = useCallback(
-    (id: string) => {
+    (id: string, landing: [number, number, number] | null) => {
       setFrogs((prev) => {
         const frog = prev.find((f) => f.id === id);
         if (!frog) return prev;
@@ -274,13 +274,9 @@ const GameWorld = ({ onShot }: { onShot: () => void }) => {
           }
         }
 
-        // Frog jumps into water — play splash and ripple at landing point
-        // Match the random dodge direction logic in Frog.tsx (no dodgeTarget => random angle, dist 1.5)
-        const angle = Math.random() * Math.PI * 2;
-        const dist = 1.5;
-        const landX = pos[0] + Math.cos(angle) * dist;
-        const landZ = pos[2] + Math.sin(angle) * dist;
-        addRipple(new THREE.Vector3(landX, pos[1], landZ));
+        // Frog jumps into water — ripple at the actual landing point reported by the frog
+        const land = landing ?? pos;
+        addRipple(new THREE.Vector3(land[0], pos[1], land[2]));
         playFrogJump();
         return prev.map((f) =>
           f.id === id
