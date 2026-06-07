@@ -165,12 +165,15 @@ const RespawnManager = ({
   frogs,
   setFrogs,
   addRipple,
+  frogsEnabled,
 }: {
   frogs: FrogData[];
   setFrogs: React.Dispatch<React.SetStateAction<FrogData[]>>;
   addRipple: (position: THREE.Vector3) => void;
+  frogsEnabled: boolean;
 }) => {
   useFrame((_, delta) => {
+    if (!frogsEnabled) return;
     setFrogs((prev) =>
       prev.map((f) => {
         if (f.respawnTimer !== null) {
