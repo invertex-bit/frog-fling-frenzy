@@ -8,6 +8,14 @@ let musicVolume = 0.5;
 let bgMusicSource: AudioBufferSourceNode | null = null;
 let bgMusicGain: GainNode | null = null;
 
+// Frogs enabled setting (persisted in session)
+let frogsEnabled = true;
+export const setFrogsEnabled = (v: boolean) => {
+  frogsEnabled = v;
+  window.dispatchEvent(new Event('frogs-setting-changed'));
+};
+export const getFrogsEnabled = () => frogsEnabled;
+
 export const setSfxVolume = (v: number) => { sfxVolume = v; };
 export const getSfxVolume = () => sfxVolume;
 export const setMusicVolume = (v: number) => {

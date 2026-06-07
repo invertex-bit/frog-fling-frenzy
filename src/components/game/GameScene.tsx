@@ -9,7 +9,7 @@ import Slingshot from './Slingshot';
 import Projectile from './Projectile';
 import Ripple from './Ripple';
 import Environment from './Environment';
-import { playSplash, playShoot, playFrogJump, startBackgroundMusic } from './SoundEffects';
+import { playSplash, playShoot, playFrogJump, startBackgroundMusic, getFrogsEnabled } from './SoundEffects';
 
 
 
@@ -165,12 +165,15 @@ const RespawnManager = ({
   frogs,
   setFrogs,
   addRipple,
+  frogsEnabled,
 }: {
   frogs: FrogData[];
   setFrogs: React.Dispatch<React.SetStateAction<FrogData[]>>;
   addRipple: (position: THREE.Vector3) => void;
+  frogsEnabled: boolean;
 }) => {
   useFrame((_, delta) => {
+    if (!frogsEnabled) return;
     setFrogs((prev) =>
       prev.map((f) => {
         if (f.respawnTimer !== null) {
@@ -216,7 +219,7 @@ const Ground = () => (
   </mesh>
 );
 
-const GameWorld = ({ onShot }: { onShot: () => void }) => {
+const GameWorld = ({ onShot, frogsEnabled }: { onShot: () => void; frogsEnabled: boolean }) => {
   const [projectiles, setProjectiles] = useState<ProjectileData[]>([]);
   const [ripples, setRipples] = useState<RippleData[]>([]);
   const [pullBack, setPullBack] = useState(new THREE.Vector3(0, 0, 0));
@@ -290,6 +293,7 @@ const GameWorld = ({ onShot }: { onShot: () => void }) => {
 
   const checkFrogHit = useCallback(
     (projectilePos: THREE.Vector3) => {
+      if (!frogsEnabled) return;
       setFrogs((prev) =>
         prev.map((f) => {
           if (!f.visible || f.shouldDodge) return f;
@@ -324,7 +328,7 @@ const GameWorld = ({ onShot }: { onShot: () => void }) => {
         })
       );
     },
-    []
+    [frogsEnabled]
   );
 
   const handleShoot = useCallback(
@@ -350,7 +354,7 @@ const GameWorld = ({ onShot }: { onShot: () => void }) => {
         setPullBack={setPullBack}
         setIsPulling={setIsPulling}
       />
-      <RespawnManager frogs={frogs} setFrogs={setFrogs} addRipple={addRipple} />
+      <RespawnManager frogs={frogs} setFrogs={setFrogs} addRipple={addRipple} frogsEnabled={frogsEnabled} />
 
       <ambientLight intensity={0.6} />
       <directionalLight position={[5, 10, 5]} intensity={1} castShadow />
@@ -366,7 +370,7 @@ const GameWorld = ({ onShot }: { onShot: () => void }) => {
         <LilyPad key={i} position={pos} />
       ))}
 
-      <FrogManager frogs={frogs} onDodge={handleFrogDodge} />
+      {frogsEnabled && <FrogManager frogs={frogs} onDodge={handleFrogDodge} />}
       <Slingshot pullBack={pullBack} isPulling={isPulling} stoneColor={currentColor} />
 
       {projectiles.map((proj) => (
@@ -397,6 +401,7 @@ const GameScene = () => {
   const musicStarted = useRef(false);
   const [shotCount, setShotCount] = useState(0);
   const [showHint, setShowHint] = useState(true);
+  const [frogsEnabled, setFrogsEnabledState] = useState(getFrogsEnabled);
 
   const handleInteraction = useCallback(() => {
     if (!musicStarted.current) {
@@ -414,6 +419,12 @@ const GameScene = () => {
     const handler = () => setShotCount(0);
     window.addEventListener('reset-shot-count', handler);
     return () => window.removeEventListener('reset-shot-count', handler);
+  }, []);
+
+  useEffect(() => {
+    const handler = () => setFrogsEnabledState(getFrogsEnabled());
+    window.addEventListener('frogs-setting-changed', handler);
+    return () => window.removeEventListener('frogs-setting-changed', handler);
   }, []);
 
   return (
@@ -486,7 +497,7 @@ const GameScene = () => {
         gl={{ antialias: true }}
         dpr={[1, 2]}
       >
-        <GameWorld onShot={handleShot} />
+        <GameWorld onShot={handleShot} frogsEnabled={frogsEnabled} />
       </Canvas>
     </div>
   );

@@ -1,11 +1,12 @@
 import { useState } from 'react';
 import { Settings } from 'lucide-react';
-import { getSfxVolume, setSfxVolume, getMusicVolume, setMusicVolume } from './SoundEffects';
+import { getSfxVolume, setSfxVolume, getMusicVolume, setMusicVolume, getFrogsEnabled, setFrogsEnabled } from './SoundEffects';
 
 const SettingsPanel = () => {
   const [open, setOpen] = useState(false);
   const [sfx, setSfx] = useState(getSfxVolume());
   const [music, setMusic] = useState(getMusicVolume());
+  const [frogs, setFrogs] = useState(getFrogsEnabled());
 
   return (
     <>
@@ -80,6 +81,29 @@ const SettingsPanel = () => {
             }}
             style={{ width: '100%', marginBottom: 16 }}
           />
+
+          <label
+            style={{
+              display: 'flex',
+              alignItems: 'center',
+              gap: 10,
+              marginBottom: 16,
+              fontSize: 13,
+              cursor: 'pointer',
+            }}
+          >
+            <input
+              type="checkbox"
+              checked={frogs}
+              onChange={(e) => {
+                const v = e.target.checked;
+                setFrogs(v);
+                setFrogsEnabled(v);
+              }}
+              style={{ width: 18, height: 18, cursor: 'pointer' }}
+            />
+            Лягушки
+          </label>
 
           <button
             onClick={() => window.dispatchEvent(new Event('reset-shot-count'))}
