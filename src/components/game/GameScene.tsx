@@ -219,7 +219,7 @@ const Ground = () => (
   </mesh>
 );
 
-const GameWorld = ({ onShot }: { onShot: () => void }) => {
+const GameWorld = ({ onShot, frogsEnabled }: { onShot: () => void; frogsEnabled: boolean }) => {
   const [projectiles, setProjectiles] = useState<ProjectileData[]>([]);
   const [ripples, setRipples] = useState<RippleData[]>([]);
   const [pullBack, setPullBack] = useState(new THREE.Vector3(0, 0, 0));
@@ -293,6 +293,7 @@ const GameWorld = ({ onShot }: { onShot: () => void }) => {
 
   const checkFrogHit = useCallback(
     (projectilePos: THREE.Vector3) => {
+      if (!frogsEnabled) return;
       setFrogs((prev) =>
         prev.map((f) => {
           if (!f.visible || f.shouldDodge) return f;
@@ -327,7 +328,7 @@ const GameWorld = ({ onShot }: { onShot: () => void }) => {
         })
       );
     },
-    []
+    [frogsEnabled]
   );
 
   const handleShoot = useCallback(
@@ -353,7 +354,7 @@ const GameWorld = ({ onShot }: { onShot: () => void }) => {
         setPullBack={setPullBack}
         setIsPulling={setIsPulling}
       />
-      <RespawnManager frogs={frogs} setFrogs={setFrogs} addRipple={addRipple} />
+      <RespawnManager frogs={frogs} setFrogs={setFrogs} addRipple={addRipple} frogsEnabled={frogsEnabled} />
 
       <ambientLight intensity={0.6} />
       <directionalLight position={[5, 10, 5]} intensity={1} castShadow />
@@ -369,7 +370,7 @@ const GameWorld = ({ onShot }: { onShot: () => void }) => {
         <LilyPad key={i} position={pos} />
       ))}
 
-      <FrogManager frogs={frogs} onDodge={handleFrogDodge} />
+      {frogsEnabled && <FrogManager frogs={frogs} onDodge={handleFrogDodge} />}
       <Slingshot pullBack={pullBack} isPulling={isPulling} stoneColor={currentColor} />
 
       {projectiles.map((proj) => (
