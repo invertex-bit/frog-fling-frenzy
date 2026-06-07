@@ -9,7 +9,7 @@ import Slingshot from './Slingshot';
 import Projectile from './Projectile';
 import Ripple from './Ripple';
 import Environment from './Environment';
-import { playSplash, playShoot, playFrogJump, startBackgroundMusic } from './SoundEffects';
+import { playSplash, playShoot, playFrogJump, startBackgroundMusic, getFrogsEnabled } from './SoundEffects';
 
 
 
