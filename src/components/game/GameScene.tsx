@@ -401,6 +401,7 @@ const GameScene = () => {
   const musicStarted = useRef(false);
   const [shotCount, setShotCount] = useState(0);
   const [showHint, setShowHint] = useState(true);
+  const [frogsEnabled, setFrogsEnabledState] = useState(getFrogsEnabled);
 
   const handleInteraction = useCallback(() => {
     if (!musicStarted.current) {
@@ -418,6 +419,12 @@ const GameScene = () => {
     const handler = () => setShotCount(0);
     window.addEventListener('reset-shot-count', handler);
     return () => window.removeEventListener('reset-shot-count', handler);
+  }, []);
+
+  useEffect(() => {
+    const handler = () => setFrogsEnabledState(getFrogsEnabled());
+    window.addEventListener('frogs-setting-changed', handler);
+    return () => window.removeEventListener('frogs-setting-changed', handler);
   }, []);
 
   return (
@@ -490,7 +497,7 @@ const GameScene = () => {
         gl={{ antialias: true }}
         dpr={[1, 2]}
       >
-        <GameWorld onShot={handleShot} />
+        <GameWorld onShot={handleShot} frogsEnabled={frogsEnabled} />
       </Canvas>
     </div>
   );
